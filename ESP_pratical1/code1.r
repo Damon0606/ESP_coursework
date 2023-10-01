@@ -62,3 +62,11 @@ b <- Unique[Index[Frequency[target_positions]]] # 提取常见词index对应的�
 # was_index <- which(Unique == "was")
 # was_frequency <- Frequency[24]
 # was_rank <- which(SortedFreq == was_frequency)
+
+# Step 6-2
+Unique <- unique(tolower(W_clean)) ##去重
+Index <- match(tolower(W_clean), Unique) #a中单词在unique的位置
+Frequency <- as.data.frame(table(Index))#统计在a中unique各单词各出现了多少次
+sorted_Frequency <- Frequency[order(-Frequency$Freq), ]
+Frequency_1000 <- sorted_Frequency[1:1000, ]
+b <- Unique[Frequency_1000$Index]
