@@ -1,37 +1,4 @@
 setwd("/workspaces/ESP_coursework/ESP_pratical1/Original_Data") ## comment out of submitted
-a <- scan("4300-0.txt", what = "character", skip = 73, nlines = 32858 - 73)
-a <- gsub("_(", "", a, fixed = TRUE) ## remove "_("
-
-punctuation <- c(",", ".", ";", "!", ":", "?")
-split_punct <- function(words, punctuation) {
-  pattern <- paste0(punctuation, "$") # 创建匹配以标点符号结尾的模式
-  sentences <- grep(pattern, words, value = TRUE) # 找到与模式匹配的单词
-  
-  words_index <- which(sentences) ## 返回有标点符号的单词位置
-  
-  words <- paste0()words[-words_index] ##在没有标点符号的单词后加空格
-  
-  number_total <- rep('', length(sentences) + length(words))## 建立新空向量来存放单词+符号
-  punctuations_index <- words_index + 1:length(words_index)## 新向量中标点符号应该放在哪里
-
-  number_total[punctuations_index]<-substr(words[words_index],-1,-1)## 截取所有标点符号并放入
-  ## 放没有标点符号的词
-  number_total[-punctuations_index]<-substr(words,1,-2)
-  
-  
-  
-  
-  # # 在匹配的单词中用空格替换标点符号，以实现分割
-  # split_sentences <- gsub(pattern, " ", sentences)
-  # 
-  # # 使用分割后的句子替换原始向量中的匹配单词
-  # result <- sub(pattern, split_sentences, words)
-
-  return(result)
-}
-
-
-
 
 W <- scan("4300-0.txt", what = "character", skip = 73, nlines = 32858 - 73)
 W <- gsub("_(", "", W, fixed = TRUE) ## remove "_("
@@ -39,85 +6,28 @@ W <- gsub("_(", "", W, fixed = TRUE) ## remove "_("
 
 
 # Step 4
+# punctuation <- c(",", ".", ";", "!", ":", "?")
 split_punct <- function(words, punctuation) {
-  words_index <- which(grepl("[[:punct:]]", words))
+  words_index <- grep("[,.;!:?]", words) # 处理单词结尾是符号[,.;!:?]的情况
   punc_index <- words_index + 1:length(words_index)
   words_modified <- rep("", length(words) + length(punc_index))
   words_modified[-punc_index] <- sapply(words, function(x) ifelse(x %in% words[words_index], substr(x, 1, nchar(x) - 1), x))
   words_modified[punc_index] <- sapply(words[words_index], function(x) substr(x, nchar(x), nchar(x)))
-  words_modified
-  # names(words_modified) <- NULL
   return(words_modified)
 }
-
-# Test the function
-# text <- c("An", "omnishambles,", "in", "a.", "headless?", "chicken", "factory")
-# punctuation <- c(",", ".", ";", "!", ":", "?")
-# split_punct(text, punctuation)
-
-
-
-# Zukai Li s2505721; Huantong Hou s; Yuqi Shi s
-# Contributions:
-
-
-# Step 3
-setwd("/Users/l/Desktop/Edinburgh/Extended_Statistical_Programming/ESP_coursework/ESP_pratical1/Original_Data") ## comment out of submitted
-W <- scan("4300-0.txt", what = "character", skip = 73, nlines = 32858 - 73)
-W <- gsub("_(", "", W, fixed = TRUE) ## remove "_("
-# View(W)
-
-
-# Step 4
-split_punct <- function(words, punctuation) {
-  words_index <- grep("\\b\\w+[[:punct:]]\\b", words) ## which(grepl("\\w+|[[:punct:]]", words))
-  punc_index <- words_index + 1:length(words_index)
-  words_modified <- rep("", length(words) + length(punc_index))
-  words_modified[-punc_index] <- sapply(words, function(x) ifelse(x %in% words[words_index], substr(x, 1, nchar(x) - 1), x))
-  words_modified[punc_index] <- sapply(words[words_index], function(x) substr(x, nchar(x), nchar(x)))
-  # words_modified
-  # names(words_modified) <- NULL
-  return(words_modified)
-}
-
-# Test the function
-# text <- c("An", "omnishambles,", "in", "a.", "headless?", "chicken", "factory")
-# punctuation <- c(",", ".", ";", "!", ":", "?")
-# split_punct(text, punctuation)
 
 
 # Step 5
-# punctuation <- c(",", ".", ";", "!", ":", "?")
-# punctuation <- grep("\\w+|[[:punct:]]")
 W_splited <- split_punct(W, punctuation)
+W_splited
 
 remove_punctuation <- function(words) {
-  hyphen_index <- grepl("\\b-+\\w", words)
-  words[hyphen_index] <- sapply(words[hyphen_index], function(x) substr(x, 2, nchar(x)))
-  words <- gsub("\\b[[:punct:]]\\b", "", words)
+  hyphen_index <- grepl("\\b-+\\w|\\b—+\\w|\\b_+\\w", words) # 处理单词开头包含[-—_]的情况
+  words[hyphen_index] <- sapply(words[hyphen_index], function(x) substr(x, 2, nchar(x))) # 删除单词开头的[-—_]
+  words <- gsub("[,.;!:?_]", "", words) # 删除所有分隔出来的[,.;!:?_]
+  words <- words[words != ""]
   return(words)
 }
 
 W_clean <- remove_punctuation(W_splited)
 W_clean
-
-
-
-
-
-
-
-# Step 6
-# (a)
-W_unique <- unique(W_clean)
-
-# (b)
-
-
-# (c)
-
-
-# (d)
-
-
-# (e)
