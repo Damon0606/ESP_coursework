@@ -54,3 +54,70 @@ split_punct <- function(words, punctuation) {
 # text <- c("An", "omnishambles,", "in", "a.", "headless?", "chicken", "factory")
 # punctuation <- c(",", ".", ";", "!", ":", "?")
 # split_punct(text, punctuation)
+
+
+
+# Zukai Li s2505721; Huantong Hou s; Yuqi Shi s
+# Contributions:
+
+
+# Step 3
+setwd("/Users/l/Desktop/Edinburgh/Extended_Statistical_Programming/ESP_coursework/ESP_pratical1/Original_Data") ## comment out of submitted
+W <- scan("4300-0.txt", what = "character", skip = 73, nlines = 32858 - 73)
+W <- gsub("_(", "", W, fixed = TRUE) ## remove "_("
+# View(W)
+
+
+# Step 4
+split_punct <- function(words, punctuation) {
+  words_index <- grep("\\b\\w+[[:punct:]]\\b", words) ## which(grepl("\\w+|[[:punct:]]", words))
+  punc_index <- words_index + 1:length(words_index)
+  words_modified <- rep("", length(words) + length(punc_index))
+  words_modified[-punc_index] <- sapply(words, function(x) ifelse(x %in% words[words_index], substr(x, 1, nchar(x) - 1), x))
+  words_modified[punc_index] <- sapply(words[words_index], function(x) substr(x, nchar(x), nchar(x)))
+  # words_modified
+  # names(words_modified) <- NULL
+  return(words_modified)
+}
+
+# Test the function
+# text <- c("An", "omnishambles,", "in", "a.", "headless?", "chicken", "factory")
+# punctuation <- c(",", ".", ";", "!", ":", "?")
+# split_punct(text, punctuation)
+
+
+# Step 5
+# punctuation <- c(",", ".", ";", "!", ":", "?")
+# punctuation <- grep("\\w+|[[:punct:]]")
+W_splited <- split_punct(W, punctuation)
+
+remove_punctuation <- function(words) {
+  hyphen_index <- grepl("\\b-+\\w", words)
+  words[hyphen_index] <- sapply(words[hyphen_index], function(x) substr(x, 2, nchar(x)))
+  words <- gsub("\\b[[:punct:]]\\b", "", words)
+  return(words)
+}
+
+W_clean <- remove_punctuation(W_splited)
+W_clean
+
+
+
+
+
+
+
+# Step 6
+# (a)
+W_unique <- unique(W_clean)
+
+# (b)
+
+
+# (c)
+
+
+# (d)
+
+
+# (e)
