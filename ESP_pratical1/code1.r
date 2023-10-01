@@ -29,3 +29,28 @@ split_punct <- function(words, punctuation) {
 
   return(result)
 }
+
+
+
+
+W <- scan("4300-0.txt", what = "character", skip = 73, nlines = 32858 - 73)
+W <- gsub("_(", "", W, fixed = TRUE) ## remove "_("
+# View(W)
+
+
+# Step 4
+split_punct <- function(words, punctuation) {
+  words_index <- which(grepl("[[:punct:]]", words))
+  punc_index <- words_index + 1:length(words_index)
+  words_modified <- rep("", length(words) + length(punc_index))
+  words_modified[-punc_index] <- sapply(words, function(x) ifelse(x %in% words[words_index], substr(x, 1, nchar(x) - 1), x))
+  words_modified[punc_index] <- sapply(words[words_index], function(x) substr(x, nchar(x), nchar(x)))
+  words_modified
+  # names(words_modified) <- NULL
+  return(words_modified)
+}
+
+# Test the function
+# text <- c("An", "omnishambles,", "in", "a.", "headless?", "chicken", "factory")
+# punctuation <- c(",", ".", ";", "!", ":", "?")
+# split_punct(text, punctuation)
