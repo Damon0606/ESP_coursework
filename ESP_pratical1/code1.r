@@ -31,3 +31,34 @@ remove_punctuation <- function(words) {
 
 W_clean <- remove_punctuation(W_splited)
 W_clean
+
+
+# Step 6
+# (a)
+# 去重
+Unique <- unique(tolower(W_clean))
+
+# (b)
+# 单词对应的index
+Index <- match(tolower(W_clean), Unique)
+
+# (c)
+# index对应的频次
+Frequency <- tabulate(Index)
+
+# (d)
+# 重新排序
+SortedFreq <- Frequency[order(Frequency, decreasing = TRUE)]
+
+# 提取常见词
+target_values <- SortedFreq[1:1000] # 常见词出现频次值
+target_positions <- which(Frequency %in% target_values) # 找回常见词对应频次在index对应的频次表中的位置
+Frequency[target_positions] # 提取常见词对应的index
+
+# (e)
+b <- Unique[Index[Frequency[target_positions]]] # 提取常见词index对应的单词
+
+# Check example: was
+# was_index <- which(Unique == "was")
+# was_frequency <- Frequency[24]
+# was_rank <- which(SortedFreq == was_frequency)
