@@ -70,3 +70,16 @@ Frequency <- as.data.frame(table(Index))#统计在a中unique各单词各出现�
 sorted_Frequency <- Frequency[order(-Frequency$Freq), ]
 Frequency_1000 <- sorted_Frequency[1:1000, ]
 b <- Unique[Frequency_1000$Index]
+
+# Step 7
+first_col<-c()
+second_col<-c()
+third_col<-c()
+for (i in 1:length(Frequency_1000$Index)) {
+  a_b_position<- which(Index[] == Frequency_1000$Index[i])
+  first_col <- append(matrix(rep(Frequency_1000$Index[i],length(a_b_position)),ncol = 1),first_col)
+  second_col<-append(matrix(Index[a_b_position+1],ncol = 1),second_col)
+  third_col<-append(matrix(Index[a_b_position+2],ncol = 1),third_col)
+}
+triplets<- cbind(first_col,second_col,third_col)# 创建三元组矩阵
+pairs<-cbind(first_col,second_col)# 创建二元组矩阵
