@@ -2,6 +2,7 @@ setwd("/workspaces/ESP_coursework/ESP_pratical1/Original_Data") ## comment out o
 
 W <- scan("4300-0.txt", what = "character", skip = 73, nlines = 32858 - 73)
 W <- gsub("_(", "", W, fixed = TRUE) ## remove "_("
+W <- gsub(")_", "", W, fixed = TRUE) ## remove ")_"
 # View(W)
 
 
@@ -30,6 +31,7 @@ remove_punctuation <- function(words) {
   words <- words[words != ""]
   return(words)
 }
+
 
 
 
