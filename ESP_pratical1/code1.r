@@ -93,11 +93,19 @@ b <- Unique[Frequency_1000$Index]
 first_col<-c()
 second_col<-c()
 third_col<-c()
+Index_a_common <- match(tolower(W_clean),b)
 for (i in 1:length(Frequency_1000$Index)) {
-  a_b_position<- which(Index[] == Frequency_1000$Index[i])
-  first_col <- append(matrix(rep(Frequency_1000$Index[i],length(a_b_position)),ncol = 1),first_col)
-  second_col<-append(matrix(Index[a_b_position+1],ncol = 1),second_col)
-  third_col<-append(matrix(Index[a_b_position+2],ncol = 1),third_col)
+  a_b_position<- which(Index_a_common[] == Frequency_1000$Index[i])
+  first_col <- as.numeric(append(matrix(rep(Frequency_1000$Index[i],length(a_b_position)),ncol = 1),first_col))
+  second_col<-as.numeric(append(matrix(Index_a_common[a_b_position+1],ncol = 1),second_col))
+  third_col<-as.numeric(append(matrix(Index_a_common[a_b_position+2],ncol = 1),third_col))
 }
-triplets<- cbind(first_col,second_col,third_col)# 创建三元组矩阵
-pairs<-cbind(first_col,second_col)# 创建二元组矩阵
+Tri<- cbind(first_col,second_col,third_col)# 创建三元组矩阵
+P<-cbind(first_col,second_col)# 创建二元组矩阵
+Tri_rowsum <- rowSums(Tri,na.rm = FALSE)
+Tri_all_common_words <- which(!is.na(Tri_rowsum))
+P_rowsum <- rowSums(P,na.rm = FALSE)
+P_all_common_words <- which(!is.na(P_rowsum))
+Tri_final <- Tri[Tri_all_common_words,]
+P_final <- P[P_all_common_words,]
+
