@@ -216,6 +216,40 @@ P_final <- P[P_all_common_words, ]
 # ———————————————————————————————————————————————————————————————————————————————
 # Step 8
 # ———————————————————————————————————————————————————————————————————————————————
+#### 10.4 version
+sample_words <- function(all_words, n) {
+  Frenquency_table <- as.data.frame(table(all_words))
+  Frenquency_table$word_freq <- Frenquency_table[, 2] / sum(Frenquency_table[, 2])
+  word_index <- sample(seq_along(Frenquency_table[, 1]), 
+                       size = n, replace = TRUE, prob = Frenquency_table$word_freq)
+  return(word_index)
+}
+sample_50_words<-c()
+##随机抽取第一个词，从P_final的第一列中抽取
+##随机抽取第一个词，从P_final的第一列中抽取
+sample_50_words[1]<-sample(unique(P_final[,1]),size = 1)
+##第二词以第一个词为基准，找出频率最高的第二个词
+all_second_words_1<-P_final[P_final[, 1] == sample_50_words[1], ]
+sample_50_words[2] <- sample_words(all_second_words_1, 1)
+
+# Simulate the rest of the 48 words
+for (i in 3:50) {
+  all_third_words <- Tri_final[(Tri_final[, 1] == sample_50_words[i - 2]) & (Tri_final[, 2] == sample_50_words[i - 1])]
+  all_second_words <- P_final[P_final[, 1] == sample_50_words[i - 1]]
+  if (length(all_third_words) != 0) {
+    sample_50_words<-append(sample_50_words,sample_words(all_third_words, 1))
+  } else if (length(all_second_words) != 0) {
+    sample_50_words<-append(sample_50_words,sample_words(all_second_words, 1))
+  } else {
+    sample_50_words<- append(sample_50_words,sample(unique(P_final[,1]),size = 1))
+    print(i)
+  }
+}
+section8 <- paste(b[sample_50_words], collapse = " ")
+section8 <- gsub("\\s+(?=[[:punct:]])", "", section8, perl = TRUE)
+cat(section8)
+###############
+
 sample_words <- function(all_words, n, Dictionary) {
   Frenquency_table <- as.data.frame(table(all_words))
   Frenquency_table$word_freq <- Frenquency_table[, 2] / sum(Frenquency_table[, 2])
