@@ -131,7 +131,6 @@ cat(section9)
 
 
 
-
 # Practical 1: A Markov Ulysses
 # Finished by: Group 15: Huantong Hou(s2481591), Yuqi Shi, Zukai Li
 # Contribution:
@@ -231,7 +230,8 @@ sample_words <- function(all_words, n) {
 
 sample_50_words<-c() ## vector for 50-word sections
 sample_50_words[1]<-sample(unique(P_final[,1]),size = 1) ## 8(a)randomly select from P_final
-sample_50_words[2] <- sample_words(all_second_words_1, 1) ## generate second word from Pairs
+all_second_words_1<-P_final[P_final[, 1] == sample_50_words[1], ]## generate second word from Pairs
+sample_50_words[2] <- sample_words(all_second_words_1, 1) 
 # Simulate the rest of the 48 words
 for (i in 3:50) { 
   ## 8(b)extract sub-matrix from Triplets
@@ -263,3 +263,4 @@ words_sections9<-Unique[words_sections9] ## words based on simulation indices
 section9 <- paste(words_sections9, collapse = " ")## combined into a sentence
 section9 <- gsub("\\s+(?=[[:punct:]])", "", section9, perl = TRUE)
 cat(section9)
+
