@@ -217,6 +217,38 @@ P_final <- P[P_all_common_words, ]
 # Step 8
 # ———————————————————————————————————————————————————————————————————————————————
 #### 10.4 version
+# ———————————————————————————————————————————————————————————————————————————————
+# Step 7
+# ———————————————————————————————————————————————————————————————————————————————
+first_col <- c()
+second_col <- c()
+third_col <- c()
+Index_a_common <- match(tolower(W_clean), b)
+for (i in 1:length(Frequency_1000$Index)) {
+  a_b_position <- which(Index_a_common[] == Frequency_1000$Index[i])
+  first_col <- as.numeric(append(matrix(rep(Frequency_1000$Index[i], length(a_b_position)), ncol = 1), first_col))
+  second_col <- as.numeric(append(matrix(Index_a_common[a_b_position + 1], ncol = 1), second_col))
+  third_col <- as.numeric(append(matrix(Index_a_common[a_b_position + 2], ncol = 1), third_col))
+}
+
+Tri <- cbind(first_col, second_col, third_col) # 创建三元组矩阵
+Tri_rowsum <- rowSums(Tri, na.rm = FALSE)
+Tri_all_common_words <- which(!is.na(Tri_rowsum))
+Tri_final <- Tri[Tri_all_common_words, ]
+
+P <- cbind(first_col, second_col) # 创建二元组矩阵
+P_rowsum <- rowSums(P, na.rm = FALSE)
+P_all_common_words <- which(!is.na(P_rowsum))
+P_final <- P[P_all_common_words, ]
+
+##delete 'the the'
+the_position <- which(b[]=='the')
+position <- which(P_final[, 1] == the_position & P_final[, 2] == the_position)
+P_final<-P_final[-position,] 
+
+# ———————————————————————————————————————————————————————————————————————————————
+# Step 8
+# ———————————————————————————————————————————————————————————————————————————————
 sample_words <- function(all_words, n) {
   Frenquency_table <- as.data.frame(table(all_words))
   Frenquency_table$word_freq <- Frenquency_table[, 2] / sum(Frenquency_table[, 2])
@@ -248,7 +280,18 @@ for (i in 3:50) {
 section8 <- paste(b[sample_50_words], collapse = " ")
 section8 <- gsub("\\s+(?=[[:punct:]])", "", section8, perl = TRUE)
 cat(section8)
-###############
+### 问题：会出现两个连续的符号
+
+# ———————————————————————————————————————————————————————————————————————————————
+# Step 9
+# ———————————————————————————————————————————————————————————————————————————————
+# Frequency_1000$b_freq <- Frequency_1000$Freq / sum(Frequency_1000$Freq)
+words_sections9 <- sample_words(Frequency_1000[, 1], 50)
+words_sections9<-Unique[words_sections9]
+section9 <- paste(words_sections9, collapse = " ")
+section9 <- gsub("\\s+(?=[[:punct:]])", "", section9, perl = TRUE)
+cat(section9)
+#####################
 
 sample_words <- function(all_words, n, Dictionary) {
   Frenquency_table <- as.data.frame(table(all_words))
