@@ -156,10 +156,10 @@ cat(section9)
 # capital letter in simulation (section in step 8)
 # ———————————————————————————————————————————————————————————————————————————————
 CapitalWords <- c() ## vector for words most often start with capital letter
-Capital_Unique <- unique(W_clean) ## Find unique words in text
+Capital_Unique <- unique(W_clean) ## find unique words in text
 pattern <- "\\b^[A-Z]\\w*\\b" ## pattern to search words starting with capital letter
 for (w in Capital_Unique) {
-  matches <- str_extract_all(w, pattern)[[1]] ## Find all words starting with capital letter
+  matches <- str_extract_all(w, pattern)[[1]] ## find all words starting with capital letter
   CapitalWords <- append(CapitalWords, matches)
 }
 
