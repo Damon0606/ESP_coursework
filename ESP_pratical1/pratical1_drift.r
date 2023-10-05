@@ -3,15 +3,15 @@
 # Contribution:
 #### Huantong Hou (s2481591):
 ###### (1) Ditch whole idea for total practical work; 
-###### (2) Finish codes for 10 & Participate in debugging total practical work;
+###### (2) Finish codes for steps 4, 6 and 10, and participate in debugging total practical work;
 ###### (3) Participate in making comments on total practical work.
 #### Yuqi Shi(s2508879): 
 ###### (1) Organize the logic for implementing the project；
-###### (2) mainly write the code for steps 6, 7, and 8，and participate in debugging work;
+###### (2) Mainly write the code for steps 6, 7, and 8，and participate in debugging work;
 ###### (3) Participate in making comments on total practical work.
 #### Zukai Li (s2505721):
 ###### (1) Organizing the overall idea of the project；
-###### (2) mainly write the code for steps 4, 8, and 9，and participate in debugging work;
+###### (2) Mainly write the code for steps 4, 8, and 9，and participate in debugging work;
 ###### (3) Participate in making comments on total practical work.
 
 
