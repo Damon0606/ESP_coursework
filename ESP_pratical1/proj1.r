@@ -38,14 +38,15 @@ remove_punctuation <- function(words) {
   words <- words[words != ""] ## remove null
   return(words)
 }
+
 W <- remove_punctuation(W)
+
 ## Write a function(split_punct)
 split_punct <- function(words, punctuation) {
   words_index <- grep("[,.;!:?]", words) ## indices of words containing "[,.;!:?]"
   punc_index <- words_index + 1:length(words_index) ## determine the length of the vector which words and punctuation will be placed
   words_modified <- rep("", length(words) + length(punc_index)) ## create a vector to store split words and punctuation
-  words_modified[-punc_index] <- sapply(words, function(x) ifelse(x %in% words[words_index], substr(x, 1, nchar(x) - 1), x))
-  ## insert the text portion of words
+  words_modified[-punc_index] <- sapply(words, function(x) ifelse(x %in% words[words_index], substr(x, 1, nchar(x) - 1), x)) ## insert the text portion of words
   words_modified[punc_index] <- sapply(words[words_index], function(x) substr(x, nchar(x), nchar(x))) ## insert words without punctuation
   return(words_modified)
 }
@@ -119,7 +120,7 @@ sample_50_words <- c() ## generate an empty vector for 50-word sections
 sample_50_words[1] <- sample(unique(P_final[, 1]), size = 1) ## simulate the first word randomly from P_final
 sample_50_words[2] <- sample_words(matrix(P_final[P_final[, 1] == sample_50_words[1], ], ncol = 2), 1) ## simulate the second word randomly
 
-# Simulate the rest of the 48 words
+## Simulate the rest of the 48 words
 for (i in 3:50) {
   all_third_words <- matrix(Tri_final[(Tri_final[, 1] == sample_50_words[i - 2]) &
     (Tri_final[, 2] == sample_50_words[i - 1]), ], ncol = 3)
@@ -161,18 +162,14 @@ for (w in Capital_Unique) {
   matches <- str_extract_all(w, pattern)[[1]] ## Find all words starting with capital letter
   CapitalWords <- append(CapitalWords, matches)
 }
-## indices indicating positions of Capital in the text corresponding to unique vector
-Capi_Index <- match(CapitalWords, W_clean)
-## occurrence frequency of unique capital words in the text
-Capi_Frequency <- as.data.frame(table(Capi_Index))
-## sort frequency in descending order
-Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ]
+
+Capi_Index <- match(CapitalWords, W_clean) ## indices indicating positions of Capital in the text corresponding to unique vector
+Capi_Frequency <- as.data.frame(table(Capi_Index)) ## occurrence frequency of unique capital words in the text
+Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ] ## sort frequency in descending order
 Capi_threshold <- Capi_sorted_Frequency$Freq[10] ## threshold number of occurrences
-## last index of commonly capital words
-Capi_boundary <- max(which(Capi_sorted_Frequency$Freq == Capi_threshold))
+Capi_boundary <- max(which(Capi_sorted_Frequency$Freq == Capi_threshold)) ## last index of commonly capital words
 Capi_Frequency_10 <- Capi_sorted_Frequency[1:Capi_boundary, ]
-## most commonly occurring capital words
-Capi_b <- W_clean[as.integer(as.character(Capi_Frequency_10[, 1]))]
+Capi_b <- W_clean[as.integer(as.character(Capi_Frequency_10[, 1]))] ## most commonly occurring capital words
 
 LowerSection <- b[sample_50_words]
 for (i in (1:length(LowerSection))) {
