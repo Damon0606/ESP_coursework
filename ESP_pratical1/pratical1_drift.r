@@ -202,56 +202,81 @@ for (i in 1:length(Frequency_1000$Index)) { ## 7(b)
 }
 ## 7(c)
 Tri <- cbind(first_col, second_col, third_col) ## define Triplets
-Tri_rowsum <- rowSums(Tri, na.rm = FALSE) 
-Tri_all_common_words <- which(!is.na(Tri_rowsum)) ## identify rows containing NA
-Tri_final <- Tri[Tri_all_common_words, ] ## drop triplets containing NA
+Tri_rowsum <- rowSums(Tri, na.rm = FALSE)
+Tri_final <- Tri[which(!is.na(Tri_rowsum)), ] ## drop triplets containing NA
 ## 7(d)same for Pairs
-P <- cbind(first_col, second_col) 
+P <- cbind(first_col, second_col)
 P_rowsum <- rowSums(P, na.rm = FALSE)
-P_all_common_words <- which(!is.na(P_rowsum)) 
-P_final <- P[P_all_common_words, ]
+P_final <- P[which(!is.na(P_rowsum)), ]
 
 ## remove specific illogical situations in Pairs & Triplets
-the_position <- which(b[]=='the') ## index of 'the'
+the_position <- which(b[] == "the") ## index of 'the'
 position <- which(P_final[, 1] == the_position & P_final[, 2] == the_position)
-P_final<-P_final[-position,] ## remove 'the the'
+P_final <- P_final[-position, ] ## remove 'the the'
 
 
 # ———————————————————————————————————————————————————————————————————————————————
 # Step 8
 # ———————————————————————————————————————————————————————————————————————————————
-sample_words <- function(all_words, n) { 
+sample_words <- function(all_words) {
   Frenquency_table <- as.data.frame(table(all_words))
   Frenquency_table$word_freq <- Frenquency_table[, 2] / sum(Frenquency_table[, 2]) ## probability of each word
-  word_index <- sample(seq_along(Frenquency_table[, 1]), ## select index with a given probability
-                       size = n, replace = TRUE, prob = Frenquency_table$word_freq)
+  word_index <- sample(Frenquency_table[, 1], ## select index with a given probability
+    size = 1, replace = TRUE, prob = Frenquency_table$word_freq
+  )
   return(word_index)
 }
 
-sample_50_words<-c() ## vector for 50-word sections
-sample_50_words[1]<-sample(unique(P_final[,1]),size = 1) ## 8(a)randomly select from P_final
-all_second_words_1<-P_final[P_final[, 1] == sample_50_words[1], ]## generate second word from Pairs
-sample_50_words[2] <- sample_words(all_second_words_1, 1) 
+sample_50_words <- c() ## vector for 50-word sections
+sample_50_words[1] <- sample(unique(P_final[, 1]), size = 1) ## 8(a)randomly select from P_final
+all_second_words_1 <- matrix(P_final[P_final[, 1] == sample_50_words[1], ], ncol = 2) ## generate second word from Pairs
+sec_freq <- as.data.frame(table(all_second_words_1))
+sec_freq$word_freq <- sec_freq[, 2] / sum(sec_freq[, 2])
+sample_50_words[2] <- sample(sec_freq[, 1], size = 1, prob = sec_freq$word_freq)
+
+
 # Simulate the rest of the 48 words
-for (i in 3:50) { 
-  ## 8(b)extract sub-matrix from Triplets
-  all_third_words <- Tri_final[(Tri_final[, 1] == sample_50_words[i - 2]) 
-                               & (Tri_final[, 2] == sample_50_words[i - 1])]
-  all_second_words <- P_final[P_final[, 1] == sample_50_words[i - 1]]
+for (i in 3:50) {
+  ## 8(b) extract sub-matrix[2] from Triplets
+  all_third_words <- matrix(Tri_final[(Tri_final[, 1] == sample_50_words[i - 2]) &
+    (Tri_final[, 2] == sample_50_words[i - 1]), ], ncol = 3)
+  all_second_words <- matrix(P_final[P_final[, 1] == sample_50_words[i - 1], ], ncol = 2)
   ## 8(c)
   if (length(all_third_words) != 0) { ## if sub-matrix has rows
-    sample_50_words<-append(sample_50_words,sample_words(all_third_words, 1)) ## simulate from Triplets
+    third_freq <- as.data.frame(table(all_third_words[, 3]))
+    third_freq$word_freq <- third_freq[, 2] / sum(third_freq[, 2])
+    index_TEMP3 <- as.character(third_freq[, 1])
+    index_TEMP3 <- as.integer(index_TEMP3)
+    if (length(index_TEMP3) == 1) {
+      index_temp3 <- index_TEMP3
+    } else {
+      index_temp3 <- sample(index_TEMP3, size = 1, prob = third_freq[, 3])
+    }
+    sample_50_words <- append(sample_50_words, index_temp3) ## simulate from Triplets
+    cat(i, "3", index_temp3, "\n")
   } else if (length(all_second_words) != 0) { ## if sub-matrix has no rows
-    sample_50_words<-append(sample_50_words,sample_words(all_second_words, 1)) ## simulate from Pairs
+    second_freq <- as.data.frame(table(all_second_words[, 2]))
+    second_freq$word_freq <- second_freq[, 2] / sum(second_freq[, 2])
+    index_TEMP2 <- as.character(second_freq[, 1])
+    index_TEMP2 <- as.integer(index_TEMP2)
+    if (length(index_TEMP2) == 1) {
+      index_temp2 <- index_TEMP2
+    } else {
+      index_temp2 <- sample(index_TEMP2, size = 1, prob = second_freq[, 3])
+    }
+    index_temp2 <- sample(index_TEMP2, size = 1, prob = second_freq[, 3])
+    sample_50_words <- append(sample_50_words, index_temp2) ## simulate from Pairs
+    cat(i, "2", index_temp2, "\n")
   } else { ## if neither Triplets nor Pairs have rows
-    sample_50_words<- append(sample_50_words,sample(unique(P_final[,1]),size = 1)) ## simulate based on probability
-    print(i)
+    index_temp1 <- sample(unique(P_final[, 1]), 1)
+    sample_50_words <- append(sample_50_words, index_temp1) ## simulate based on probability
+    cat(i, "1", index_temp1, "\n")
   }
 }
+
 section8 <- paste(b[sample_50_words], collapse = " ") ## combined into a sentence
 section8 <- gsub("\\s+(?=[[:punct:]])", "", section8, perl = TRUE)
 cat(section8)
-### 问题：会出现两个连续的符号
 
 
 # ———————————————————————————————————————————————————————————————————————————————
@@ -259,8 +284,8 @@ cat(section8)
 # ———————————————————————————————————————————————————————————————————————————————
 # Frequency_1000$b_freq <- Frequency_1000$Freq / sum(Frequency_1000$Freq)
 words_sections9 <- sample_words(Frequency_1000[, 1], 50) ## simulate indices based on common frequencies
-words_sections9<-Unique[words_sections9] ## words based on simulation indices
-section9 <- paste(words_sections9, collapse = " ")## combined into a sentence
+words_sections9 <- Unique[words_sections9] ## words based on simulation indices
+section9 <- paste(words_sections9, collapse = " ") ## combined into a sentence
 section9 <- gsub("\\s+(?=[[:punct:]])", "", section9, perl = TRUE)
 cat(section9)
 
