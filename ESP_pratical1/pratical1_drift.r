@@ -4,12 +4,15 @@
 #### Huantong Hou (s2481591):
 ###### (1) Ditch whole idea for total practical work; 
 ###### (2) Finish codes for 10 & Participate in debugging total practical work;
-###### (3) Participate in making comments on total practical work;
+###### (3) Participate in making comments on total practical work.
 #### Yuqi Shi(s2508879): 
 ###### (1) Organize the logic for implementing the project；
 ###### (2) mainly write the code for steps 6, 7, and 8，and participate in debugging work;
-###### (3) Participate in making comments on total practical work;
+###### (3) Participate in making comments on total practical work.
 #### Zukai Li (s2505721):
+###### (1) Organizing the overall idea of the project；
+###### (2) mainly write the code for steps 4, 8, and 9，and participate in debugging work;
+###### (3) Participate in making comments on total practical work.
 
 
 # ———————————————————————————————————————————————————————————————————————————————
@@ -95,56 +98,52 @@ P_final <- P_final[-position, ] ## remove 'the the' from pairs
 
 # ———————————————————————————————————————————————————————————————————————————————
 # Step 8
+# Simulate 50-word sections using word occurrence probability models
 # ———————————————————————————————————————————————————————————————————————————————
-
+## A function randomly extracts word indices from the corresponding array according to different situations
 sample_words <- function(all_words, n, type) {
-  Frenquency_table <- as.data.frame(table(all_words[, type]))
-  Frenquency_table$word_freq <- Frenquency_table[, 2] / sum(Frenquency_table[, 2])
-  index_TEMP <- as.integer(as.character(Frenquency_table[, 1]))
-  if (length(index_TEMP) == 1) {
-    index_temp <- index_TEMP
+  Frenquency_table <- as.data.frame(table(all_words[, type])) ## calculate frequency
+  Frenquency_table$word_freq <- Frenquency_table[, 2] / sum(Frenquency_table[, 2]) ## calculate sample probability according to the frequency
+  index_TEMP <- as.integer(as.character(Frenquency_table[, 1])) ## change the data type to make sure the sample function works
+  if (length(index_TEMP) == 1) { ## when the word to be generated is unique
+    index_temp <- index_TEMP  ## extract directly 
   } else {
-    index_temp <- sample(index_TEMP, size = n, prob = as.double(Frenquency_table$word_freq))
+    index_temp <- sample(index_TEMP, size = n, prob = as.double(Frenquency_table$word_freq))  ## extract the next generated word based on probability
   }
   return(index_temp)
 }
 
-sample_50_words <- c() ## vector for 50-word sections
-sample_50_words[1] <- sample(unique(P_final[, 1]), size = 1) ## 8(a)randomly select from P_final
-sample_50_words[2] <- sample_words(matrix(P_final[P_final[, 1] == sample_50_words[1], ], ncol = 2), 1)
+sample_50_words <- c() ## generate an empty vector for 50-word sections
+sample_50_words[1] <- sample(unique(P_final[, 1]), size = 1) ## simulate the first word randomly from P_final
+sample_50_words[2] <- sample_words(matrix(P_final[P_final[, 1] == sample_50_words[1], ], ncol = 2), 1) ## simulate the second word randomly 
 
 # Simulate the rest of the 48 words
 for (i in 3:50) {
-  ## 8(b) extract sub-matrix[2] from Triplets
   all_third_words <- matrix(Tri_final[(Tri_final[, 1] == sample_50_words[i - 2]) &
                                         (Tri_final[, 2] == sample_50_words[i - 1]), ], ncol = 3)
   all_second_words <- matrix(P_final[P_final[, 1] == sample_50_words[i - 1], ], ncol = 2)
-  ## 8(c)
-  if (length(all_third_words) != 0) { ## if sub-matrix has rows
-    sample_50_words <- append(sample_50_words, sample_words(all_third_words, 1, 3))
-    cat(i, "3", index_temp3, "\n")
-  } else if (length(all_second_words) != 0) { ## if sub-matrix has no rows
+  if (length(all_third_words) != 0) { ## if sub-matrix from Tri_final has rows that satisfy the condition
+    sample_50_words <- append(sample_50_words, sample_words(all_third_words, 1, 3)) ## simulate from Tri_final
+  } else if (length(all_second_words) != 0) { ## if sub-matrix from P_final has rows that satisfy the condition
     sample_50_words <- append(sample_50_words, sample_words(all_second_words, 1, 2)) ## simulate from Pairs
-    cat(i, "2", index_temp2, "\n")
-  } else { ## if neither Triplets nor Pairs have rows
-    sample_50_words <- append(sample_50_words, sample(unique(P_final[, 1]), 1)) ## simulate based on probability
-    cat(i, "1", index_temp1, "\n")
+  } else { ## if neither Triplets nor Pairs have rows that satisfy the condition
+    sample_50_words <- append(sample_50_words, sample(unique(P_final[, 1]), 1)) ## simulate according to the common word frequencies
   }
 }
 
 section8 <- paste(b[sample_50_words], collapse = " ") ## combined into a sentence
-section8 <- gsub("\\s+(?=[[:punct:]])", "", section8, perl = TRUE)
+section8 <- gsub("\\s+(?=[[:punct:]])", "", section8, perl = TRUE) ## handling syntactic formatting
 cat(section8)
 
 
 # ———————————————————————————————————————————————————————————————————————————————
 # Step 9
+# Simulate 50-word sections of text only based on the common word frequencies
 # ———————————————————————————————————————————————————————————————————————————————
-# Frequency_1000$b_freq <- Frequency_1000$Freq / sum(Frequency_1000$Freq)
 words_sections9 <- sample(Frequency_1000[, 1], size = 50, prob = Frequency_1000[, 2]) ## simulate indices based on common frequencies
-words_sections9 <- Unique[words_sections9] ## words based on simulation indices
-section9 <- paste(words_sections9, collapse = " ") ## combined into a sentence
-section9 <- gsub("\\s+(?=[[:punct:]])", "", section9, perl = TRUE)
+words_sections9 <- Unique[words_sections9] ## find the corresponding words based on simulation indices
+section9 <- paste(words_sections9, collapse = " ") ## combined all simulated words into a sentence
+section9 <- gsub("\\s+(?=[[:punct:]])", "", section9, perl = TRUE) ## handling syntactic formatting
 cat(section9)
 
 
