@@ -130,3 +130,35 @@ words_sections9 <- Unique[words_sections9] ## words based on simulation indices
 section9 <- paste(words_sections9, collapse = " ") ## combined into a sentence
 section9 <- gsub("\\s+(?=[[:punct:]])", "", section9, perl = TRUE)
 cat(section9)
+
+
+# ———————————————————————————————————————————————————————————————————————————————
+# Step 10
+# ———————————————————————————————————————————————————————————————————————————————
+CapitalWords <- c()
+pattern <- "\\b^[A-Z]\\w*\\b"
+Capital_Unique <- unique(W_clean)
+# 遍历每个单词
+for (w in Capital_Unique) {
+  matches <- str_extract_all(w, pattern)[[1]]# 检查每个单词是否匹配模式
+  CapitalWords <- append(CapitalWords, matches)
+}
+Capi_Index <- match(CapitalWords, W_clean) ## 6(b)indices indicating positions of words in the text corresponding to unique vector
+Capi_Frequency <- as.data.frame(table(Capi_Index)) ## 6(c)occurrence frequency of unique words in the text
+Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ] ## sort occurrence frequency in descending order
+Capi_threshold <- Capi_sorted_Frequency$Freq[10] ## 6(d)threshold number of occurrences
+Capi_boundary <- max(which(Capi_sorted_Frequency$Freq == Capi_threshold))
+Capi_Frequency_10 <- Capi_sorted_Frequency[1:Capi_boundary, ]
+Capi_b <- W_clean[as.integer(as.character(Capi_Frequency_10[, 1]))] ## most commonly occurring words
+
+LowerSection <- b[sample_50_words]
+for (i in (1:length(LowerSection))){
+  wd <- LowerSection[i]
+  if (wd %in% tolower(Capi_b)){
+    LowerSection[i] <- str_to_title(wd)
+  }
+}
+Lowersection8 <- paste(LowerSection, collapse = " ") ## combined into a sentence
+Lowersection8 <- gsub("\\s+(?=[[:punct:]])", "", Lowersection8, perl = TRUE)
+cat(Lowersection8)
+
