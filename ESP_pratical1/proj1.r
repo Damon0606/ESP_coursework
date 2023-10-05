@@ -160,6 +160,7 @@ Capital_Unique <- unique(W_clean) ## Find unique words in text
 pattern <- "[A-Z]\\w*" ## pattern to search words starting with capital letter
 c_words_index <- grep(pattern, Capital_Unique)
 CapitalWords <- Capital_Unique[c_words_index] ## Find all words starting with capital letter
+
 Capi_Index <- match(W_clean, CapitalWords) ## indices indicating positions of Capital in the text corresponding to unique vector
 Capi_Frequency <- as.data.frame(table(Capi_Index)) ## occurrence frequency of unique capital words in the text
 Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ] ## sort frequency in descending order
