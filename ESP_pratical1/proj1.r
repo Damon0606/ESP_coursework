@@ -32,7 +32,7 @@ W <- gsub(")_", "", W, fixed = TRUE) ## remove ")_"
 # Write a function(split_punct) that can find punctuation marks, remove them from words,
 # and place separated words and punctuation into a new vector
 # ——————————————————————————————————————————————————————————————————————————————
-## Remove useless punctuation
+## Write a funciton to remove useless punctuation
 remove_punctuation <- function(words) {
   words <- gsub("[-—_*()\\.{3}]", "", words) ## remove "[()*-—_]"
   words <- words[words != ""] ## remove null
@@ -41,7 +41,7 @@ remove_punctuation <- function(words) {
 
 W <- remove_punctuation(W)
 
-## Write a function(split_punct)
+## Write a function: split_punct() to split the words and punctuation
 split_punct <- function(words, punctuation) {
   words_index <- grep("[,.;!:?]", words) ## indices of words containing "[,.;!:?]"
   punc_index <- words_index + 1:length(words_index) ## determine the length of the vector which words and punctuation will be placed
