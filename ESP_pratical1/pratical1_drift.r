@@ -2,6 +2,9 @@
 # Finished by: Group 15: Huantong Hou (s2481591), Yuqi Shi, Zukai Li (s2505721)
 # Contribution:
 #### Huantong Hou (s2481591):
+###### (1) Ditch whole idea for total practical work 
+###### (2) Finish codes for 10 & Participate in debugging total practical work
+###### (3) Participate in making comments on total practical work
 #### Yuqi Shi:
 #### Zukai Li (s2505721):
 
@@ -134,28 +137,34 @@ cat(section9)
 
 # ———————————————————————————————————————————————————————————————————————————————
 # Step 10
+# Find words that most often start with capital letter, also start with a 
+# capital letter in simulation (section in step 8)
 # ———————————————————————————————————————————————————————————————————————————————
-CapitalWords <- c()
-pattern <- "\\b^[A-Z]\\w*\\b"
-Capital_Unique <- unique(W_clean)
-# 遍历每个单词
-for (w in Capital_Unique) {
-  matches <- str_extract_all(w, pattern)[[1]]# 检查每个单词是否匹配模式
+CapitalWords <- c() ## vector for words most often start with capital letter
+Capital_Unique <- unique(W_clean) ## Find unique words in text
+pattern <- "\\b^[A-Z]\\w*\\b" ## pattern to search words starting with capital letter
+for (w in Capital_Unique) { 
+  matches <- str_extract_all(w, pattern)[[1]]## Find all words starting with capital letter
   CapitalWords <- append(CapitalWords, matches)
 }
-Capi_Index <- match(CapitalWords, W_clean) ## 6(b)indices indicating positions of words in the text corresponding to unique vector
-Capi_Frequency <- as.data.frame(table(Capi_Index)) ## 6(c)occurrence frequency of unique words in the text
-Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ] ## sort occurrence frequency in descending order
-Capi_threshold <- Capi_sorted_Frequency$Freq[10] ## 6(d)threshold number of occurrences
-Capi_boundary <- max(which(Capi_sorted_Frequency$Freq == Capi_threshold))
+## indices indicating positions of Capital in the text corresponding to unique vector
+Capi_Index <- match(CapitalWords, W_clean) 
+## occurrence frequency of unique capital words in the text
+Capi_Frequency <- as.data.frame(table(Capi_Index)) 
+## sort frequency in descending order
+Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ] 
+Capi_threshold <- Capi_sorted_Frequency$Freq[10] ## threshold number of occurrences
+## last index of commonly capital words
+Capi_boundary <- max(which(Capi_sorted_Frequency$Freq == Capi_threshold)) 
 Capi_Frequency_10 <- Capi_sorted_Frequency[1:Capi_boundary, ]
-Capi_b <- W_clean[as.integer(as.character(Capi_Frequency_10[, 1]))] ## most commonly occurring words
+## most commonly occurring capital words
+Capi_b <- W_clean[as.integer(as.character(Capi_Frequency_10[, 1]))] 
 
 LowerSection <- b[sample_50_words]
 for (i in (1:length(LowerSection))){
   wd <- LowerSection[i]
-  if (wd %in% tolower(Capi_b)){
-    LowerSection[i] <- str_to_title(wd)
+  if (wd %in% tolower(Capi_b)){ ## find words in section are commonly capital words
+    LowerSection[i] <- str_to_title(wd) ## capitalize first word
   }
 }
 Lowersection8 <- paste(LowerSection, collapse = " ") ## combined into a sentence
