@@ -174,8 +174,7 @@ for (i in (1:length(LowerSection))){
   wd <- LowerSection[i]
   if (wd %in% tolower(Capi_b)){ ## find words in section are commonly capital words
     wds <- strsplit(wd, " ")[[1]] ## split into characters
-    ## capitalize first word
-    capital_wd <- sapply(wds, function(w) {
+    capital_wd <- sapply(wds, function(w) { ## capitalize first word
       paste(toupper(substring(w, 1, 1)), substring(w, 2), sep = "")})  
     wd <- paste(capital_wd, collapse = " ")  ## re-organize words
     LowerSection[i] <- wd
