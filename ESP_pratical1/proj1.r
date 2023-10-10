@@ -156,26 +156,28 @@ cat(section9)
 # capital letter in simulation (section in step 8)
 # ———————————————————————————————————————————————————————————————————————————————
 CapitalWords <- c() ## vector for words most often start with capital letter
-Capital_Unique <- unique(W_clean) ## find unique words in text
-pattern <- "\\b^[A-Z]\\w*\\b" ## pattern to search words starting with capital letter
-for (w in Capital_Unique) {
-  matches <- str_extract_all(w, pattern)[[1]] ## find all words starting with capital letter
-  CapitalWords <- append(CapitalWords, matches)
-}
+Capital_Unique <- unique(W_clean) ## Find unique words in text
+pattern <- "[A-Z]\\w*" ## pattern to search words starting with capital letter
+c_words_index <- grep(pattern, Capital_Unique)
+CapitalWords <- Capital_Unique[c_words_index] ## Find all words starting with capital letter
 
-Capi_Index <- match(CapitalWords, W_clean) ## indices indicating positions of Capital in the text corresponding to unique vector
+Capi_Index <- match(W_clean, CapitalWords) ## indices indicating positions of Capital in the text corresponding to unique vector
 Capi_Frequency <- as.data.frame(table(Capi_Index)) ## occurrence frequency of unique capital words in the text
 Capi_sorted_Frequency <- Capi_Frequency[order(-Capi_Frequency$Freq), ] ## sort frequency in descending order
-Capi_threshold <- Capi_sorted_Frequency$Freq[10] ## threshold number of occurrences
+Capi_threshold <- Capi_sorted_Frequency$Freq[50] ## threshold number of occurrences
 Capi_boundary <- max(which(Capi_sorted_Frequency$Freq == Capi_threshold)) ## last index of commonly capital words
 Capi_Frequency_10 <- Capi_sorted_Frequency[1:Capi_boundary, ]
-Capi_b <- W_clean[as.integer(as.character(Capi_Frequency_10[, 1]))] ## most commonly occurring capital words
+Capi_b <- CapitalWords[as.integer(as.character(Capi_Frequency_10[, 1]))] ## most commonly occurring capital words
 
 LowerSection <- b[sample_50_words]
-for (i in (1:length(LowerSection))) {
+for (i in (1:length(LowerSection))){
   wd <- LowerSection[i]
-  if (wd %in% tolower(Capi_b)) { ## find words in section are commonly capital words
-    LowerSection[i] <- str_to_title(wd) ## capitalize first word
+  if (wd %in% tolower(Capi_b)){ ## find words in section are commonly capital words
+    wds <- strsplit(wd, " ")[[1]] ## split into characters
+    capital_wd <- sapply(wds, function(w) { ## capitalize first word
+      paste(toupper(substring(w, 1, 1)), substring(w, 2), sep = "")})  
+    wd <- paste(capital_wd, collapse = " ")  ## re-organize words
+    LowerSection[i] <- wd
   }
 }
 Lowersection8 <- paste(LowerSection, collapse = " ") ## combined into a sentence
