@@ -81,59 +81,60 @@ tmf <- 40
 trf <- 30
 mf <- 5
 
+
 # Simulated original data
 set.seed(66)
 car_timetable <- sample(c(0, 1), size = total_time, replace = TRUE, prob = c(0.9, 0.1))
 car_timetable[(closed_time + 1):total_time] <- 0 # check-in closes 30 minutes before departure
-arrive_time <- which(car_timetable == 1)
+arrive_time_f <- which(car_timetable == 1)
 num_car <- length(arrive_time)
-french_time <- round(runif(n = num_car, min = tmf, max = tmf + trf), 0)
+french_time <- round(runif(n = num_car, min = tmf, max = tmf + trf), 0) ##把french time随机到每个车上
+
 
 # Initialization
-waiting_time <- rep(0, num_car)
-finish_time <- rep(0, num_car)
-station_choice <- rep(0, num_car)
-queue <- matrix(0, nrow = num_car, ncol = mf)
+waiting_time_f <- rep(0, num_car)
+finish_time_f <- rep(0, num_car)
+station_choice_f <- rep(0, num_car)
+queue_f <- matrix(0, nrow = num_car, ncol = mf)
 
 
 for (i in 1:num_car) {
-  time_point <- arrive_time[i]
-  queue_index <- which(queue[i, ] == min(queue[i, ]))[1]
-  station_choice[i] <- queue_index
-  if (queue[i, queue_index] == 0) {
-    finish_time[i] <- time_point + french_time[i]
-  } else if (queue[i, queue_index] == 1) {
-    waiting_time[i] <- finish_time[i - 1] - time_point
-    finish_time[i] <- time_point + waiting_time[i] + french_time[i]
+  time_point <- arrive_time_f[i]
+  queue_index <- which(queue_f[i,1:5] == min(queue_f[i, ]))[1]
+  station_choice_f[i] <- queue_index
+  if (queue_f[i, queue_index] == 0) {
+    finish_time_f[i] <- time_point + french_time[i]
+  } else if (queue_f[i, queue_index] == 1) {
+    waiting_time_f[i] <- finish_time_f[i - 1] - time_point
+    finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
   } else {
-    waiting_time[i] <- sum(french_time[(i - queue[i, queue_index] + 1):(i - 1)]) + (finish_time[i - queue[i, queue_index]] - time_point)
-    finish_time[i] <- time_point + waiting_time[i] + french_time[i]
+    waiting_time_f[i] <- sum(french_time[(i - queue_f[i, queue_index] + 1):(i - 1)]) + (finish_time_f[i - queue_f[i, queue_index]] - time_point)
+    finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
   }
   if (i != num_car) {
     for (j in 1:mf) {
-      k <- which(station_choice == j)
-      queue[i + 1, j] <- length(k) - sum(finish_time[k] < arrive_time[i + 1])
+      k <- which(station_choice_f == j)
+      queue_f[i + 1, j] <- length(k) - sum(finish_time_f[k] < arrive_time_f[i + 1])
     }
   }
 }
 
-cat(
-  "arrive_time:", arrive_time, "\n",
-  "station_choice:", station_choice, "\n",
-  "waiting_time:", waiting_time, "\n",
-  "french_time:", french_time, "\n",
-  "finish_time:", finish_time, "\n",
-  "queue:", "\n"
-)
-print(queue)
-
-combined_mat <- cbind(arrive_time, station_choice, waiting_time, french_time, finish_time)
-wb <- createWorkbook()
-addWorksheet(wb, "Data")
-writeData(wb, sheet = "Data", combined_mat, startCol = 1)
-writeData(wb, sheet = "Data", queue, startCol = 6)
-saveWorkbook(wb, file = "Output.xlsx", overwrite = TRUE)
-
+# cat(
+#   "arrive_time:", arrive_time_f, "\n",
+#   "station_choice:", station_choice_f, "\n",
+#   "waiting_time:", waiting_time_f, "\n",
+#   "french_time:", french_time, "\n",
+#   "finish_time:", finish_time_f, "\n",
+#   "queue:", "\n"
+# )
+# print(queue_f)
+# 
+# combined_mat <- cbind(arrive_time_f, station_choice_f, waiting_time_f, french_time, finish_time_f)
+# wb <- createWorkbook()
+# addWorksheet(wb, "Data")
+# writeData(wb, sheet = "Data", combined_mat, startCol = 1)
+# writeData(wb, sheet = "Data", queue_f, startCol = 6)
+#saveWorkbook(wb, file = "Output.xlsx", overwrite = TRUE)
 
 ## add birtish time
 waiting_time_b <- rep(0, num_car)
@@ -164,3 +165,5 @@ for (i in 1:num_car) {
     }
   }
 }
+
+
