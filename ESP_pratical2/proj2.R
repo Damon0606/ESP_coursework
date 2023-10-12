@@ -133,3 +133,34 @@ addWorksheet(wb, "Data")
 writeData(wb, sheet = "Data", combined_mat, startCol = 1)
 writeData(wb, sheet = "Data", queue, startCol = 6)
 saveWorkbook(wb, file = "Output.xlsx", overwrite = TRUE)
+
+
+## add birtish time
+waiting_time_b <- rep(0, num_car)
+finish_time_b <- rep(0, num_car)
+station_choice_b <- rep(0, num_car)
+queue_b <- matrix(0, nrow = num_car, ncol = mf)
+arrive_time_b <- finish_time_f
+british_time <- round(runif(n = num_car, min = tmf, max = tmf + trf), 0) 
+
+
+for (i in 1:num_car) {
+  time_point <- arrive_time_b[i]
+  queue_index <- which(queue_b[i,1:5] == min(queue_b[i, ]))[1]
+  station_choice_b[i] <- queue_index
+  if (queue_b[i, queue_index] == 0) {
+    finish_time_b[i] <- time_point + british_time[i]
+  } else if (queue_f[i, queue_index] == 1) {
+    waiting_time_b[i] <- finish_time_b[i - 1] - time_point
+    finish_time_b[i] <- time_point + waiting_time_b[i] + french_time[i]
+  } else {
+    waiting_time_b[i] <- sum(french_time[(i - queue_b[i, queue_index] + 1):(i - 1)]) + (finish_time_b[i - queue_b[i, queue_index]] - time_point)
+    finish_time_b[i] <- time_point + waiting_time_b[i] + french_time[i]
+  }
+  if (i != num_car) {
+    for (j in 1:mf) {
+      k <- which(station_choice_b == j)
+      queue_b[i + 1, j] <- length(k) - sum(finish_time_b[k] < arrive_time_b[i + 1])
+    }
+  }
+}
