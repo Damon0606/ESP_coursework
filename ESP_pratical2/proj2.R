@@ -13,7 +13,7 @@ qsim(5,5,.1,40,40,30,30,20)
 
 
 
-### Simple case
+### 1 country 1 stations
 set.seed(123)
 
 # total_time <- 2 * 60 * 60
@@ -71,3 +71,65 @@ for (i in 1:num_car) {
 }
 
 ### End of the simple case
+
+
+
+# 1 country 5 stations
+total_time <- 500
+closed_time <- 490
+tmf <- 40
+trf <- 30
+mf <- 5
+
+# Simulated original data
+set.seed(66)
+car_timetable <- sample(c(0, 1), size = total_time, replace = TRUE, prob = c(0.9, 0.1))
+car_timetable[(closed_time + 1):total_time] <- 0 # check-in closes 30 minutes before departure
+arrive_time <- which(car_timetable == 1)
+num_car <- length(arrive_time)
+french_time <- round(runif(n = num_car, min = tmf, max = tmf + trf), 0)
+
+# Initialization
+waiting_time <- rep(0, num_car)
+finish_time <- rep(0, num_car)
+station_choice <- rep(0, num_car)
+queue <- matrix(0, nrow = num_car, ncol = mf)
+
+
+for (i in 1:num_car) {
+  time_point <- arrive_time[i]
+  queue_index <- which(queue[i, ] == min(queue[i, ]))[1]
+  station_choice[i] <- queue_index
+  if (queue[i, queue_index] == 0) {
+    finish_time[i] <- time_point + french_time[i]
+  } else if (queue[i, queue_index] == 1) {
+    waiting_time[i] <- finish_time[i - 1] - time_point
+    finish_time[i] <- time_point + waiting_time[i] + french_time[i]
+  } else {
+    waiting_time[i] <- sum(french_time[(i - queue[i, queue_index] + 1):(i - 1)]) + (finish_time[i - queue[i, queue_index]] - time_point)
+    finish_time[i] <- time_point + waiting_time[i] + french_time[i]
+  }
+  if (i != num_car) {
+    for (j in 1:mf) {
+      k <- which(station_choice == j)
+      queue[i + 1, j] <- length(k) - sum(finish_time[k] < arrive_time[i + 1])
+    }
+  }
+}
+
+cat(
+  "arrive_time:", arrive_time, "\n",
+  "station_choice:", station_choice, "\n",
+  "waiting_time:", waiting_time, "\n",
+  "french_time:", french_time, "\n",
+  "finish_time:", finish_time, "\n",
+  "queue:", "\n"
+)
+print(queue)
+
+combined_mat <- cbind(arrive_time, station_choice, waiting_time, french_time, finish_time)
+wb <- createWorkbook()
+addWorksheet(wb, "Data")
+writeData(wb, sheet = "Data", combined_mat, startCol = 1)
+writeData(wb, sheet = "Data", queue, startCol = 6)
+saveWorkbook(wb, file = "Output.xlsx", overwrite = TRUE)
