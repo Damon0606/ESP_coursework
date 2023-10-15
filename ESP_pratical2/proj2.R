@@ -298,14 +298,16 @@ mb <- 5
 set.seed(66)
 car_timetable <- sample(c(0, 1), size = total_time, replace = TRUE, prob = c(0.9, 0.1))
 car_timetable[(closed_time + 1):total_time] <- 0 # check-in closes 30 minutes before departure
+arrive_time_f <- which(car_timetable == 1)
 num_car <- length(arrive_time_f)
 
 
+#———————————————————————————————————————————————————————————————————————————————
+### French Part
 # Simulated original data for French stations
 french_time <- round(runif(n = num_car, min = tmf, max = tmf + trf), 0) ## 把french time随机到每个车上
 
 # Initialization French stations
-arrive_time_f <- which(car_timetable == 1)
 waiting_time_f <- rep(0, num_car)
 finish_time_f <- rep(0, num_car)
 station_choice_f <- rep(0, num_car)
@@ -316,7 +318,7 @@ stations_record_f <- list(fs1 = NULL, fs2 = NULL, fs3 = NULL, fs4 = NULL, fs5 = 
 # French stations
 for (i in 1:num_car) {
   time_point <- arrive_time_f[i]
-  queue_index <- which(queue_f[i, 1:5] == min(queue_f[i, ]))[1]
+  queue_index <- which.min(queue_f[i,])[1]
   station_choice_f[i] <- queue_index
   group <- stations_record_f[[queue_index]]
   group_length <- length(group)
@@ -326,7 +328,8 @@ for (i in 1:num_car) {
     waiting_time_f[i] <- group[[group_length]] - time_point
     finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
   } else {
-    waiting_time_f[i] <- sum(group[[(group_length - (queue_f[i, queue_index]) + 1):group_length]]) + (group[group_length - queue_f[i, queue_index]] - time_point)
+    processing_car <- (group[group_length - queue_f[i, queue_index]] - time_point)
+    waiting_time_f[i] <- processing_car + sum(group[[(group_length - (queue_f[i, queue_index]) + 1):group_length]])
     finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
   }
   stations_record_f[[queue_index]][group_length + 1] <- finish_time_f[i]
@@ -338,26 +341,34 @@ for (i in 1:num_car) {
   }
 }
 
-
+###
 cat(
   "arrive_time:", arrive_time_f, "\n",
   "station_choice:", station_choice_f, "\n",
   "waiting_time:", waiting_time_f, "\n",
   "french_time:", french_time, "\n",
   "finish_time:", finish_time_f, "\n",
-  "stations_record_f", stations_record_f, "\n",
+  # "stations_record_f", stations_record_f, "\n",
   "queue:", "\n"
 )
 print(queue_f)
 
-combined_mat <- cbind(arrive_time_f, station_choice_f, waiting_time_f, french_time, finish_time_f)
-wb <- createWorkbook()
-addWorksheet(wb, "Data")
-writeData(wb, sheet = "Data", combined_mat, startCol = 1)
-writeData(wb, sheet = "Data", queue_f, startCol = 6)
-saveWorkbook(wb, file = "Output_1.xlsx", overwrite = TRUE)
+library(openxlsx)
+combined_mat_1 <- cbind(arrive_time_f, station_choice_f, waiting_time_f, french_time, finish_time_f)
+wb1 <- createWorkbook()
+addWorksheet(wb1, "Data")
+writeData(wb1, sheet = "Data", combined_mat_1, startCol = 1)
+writeData(wb1, sheet = "Data", queue_f, startCol = 6)
+saveWorkbook(wb1, file = "Output_1.xlsx", overwrite = TRUE)
+###
+
+# put all the french data into a data frame
+df_french <- cbind(arrive_time_f, station_choice_f, queue_f, waiting_time_f, french_time, finish_time_f)
+colnames(df_french) <- c("arrive_time_f", "station_choice_f", "qf1", "qf2", "qf3", "qf4", "qf5", "waiting_time_f", "french_time", "finish_time_f")
 
 
+#———————————————————————————————————————————————————————————————————————————————
+### British Part
 # Simulated original data for British stations
 british_time <- round(runif(n = num_car, min = tmb, max = tmb + trb), 0)
 
@@ -374,27 +385,23 @@ stations_record_b <- list(bs1 = NULL, bs2 = NULL, bs3 = NULL, bs4 = NULL, bs5 = 
 # British stations
 for (i in 1:num_car) {
   if (sum(queue_b[i, ] == 20) == 5) {
+    
     earliest_index <- which(finish_time_b == min(finish_time_b[(finish_time_b - arrive_time_b[i]) > 0]))
     extra_time <- finish_time_b[earliest_index] - arrive_time_b[i]
-
+    
     station_choice_in_f <- station_choice_f[i]
     tp <- finish_time_f[i]
-
-    selected <- stations_record_f[[station_choice_in_f]]
-
-    arrive_time_selected <- arrive_time_f[stations_record_f[[station_choice_in_f]]]
-    length_behind <- queue_f[which(arrive_time_f == max(arrive_time_selected[(tp - arrive_time_selected) > 0])), station_choice_in_f]
+    selected_ft <- stations_record_f[[station_choice_in_f]]
     
-    stop_index <- 
+    selected_at <-  df_french[df_french$finish_time_f == selected_ft, ][arrive_time_f]
+    selected_car <- which.min(df_french$arrive_time_f[selected_at - tp > 0])
+    length_behind <- data_french[selected_car][station_choice_in_f]
+ 
     waiting_time_f[length_behind] <- waiting_time_f[stop_index] + extra_time
     finish_time_f <- waiting_time_f[stop_index] + extra_time
   }
-
-
-
-
   time_point <- arrive_time_b[i]
-  queue_index <- which(queue_b[i, 1:5] == min(queue_b[i, ]))[1]
+  queue_index <- which.min(queue_b[i,])[1]
   station_choice_b[i] <- queue_index
   group <- stations_record_b[[queue_index]]
   group_length <- length(group)
@@ -404,7 +411,8 @@ for (i in 1:num_car) {
     waiting_time_b[i] <- group[[group_length]] - time_point
     finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
   } else {
-    waiting_time_b[i] <- sum(group[[(group_length - (queue_b[i, queue_index]) + 1):group_length]]) + (group[group_length - queue_b[i, queue_index]] - time_point)
+    processing_car <- (group[group_length - queue_b[i, queue_index]] - time_point)
+    waiting_time_b[i] <- processing_car + sum(group[[(group_length - (queue_b[i, queue_index]) + 1):group_length]])
     finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
   }
   stations_record_b[[queue_index]][group_length + 1] <- finish_time_b[i]
@@ -416,7 +424,25 @@ for (i in 1:num_car) {
   }
 }
 
+###
+combined_mat_2 <- cbind(arrive_time_b, station_choice_b, waiting_time_b, british_time, finish_time_b)
+wb2 <- createWorkbook()
+addWorksheet(wb2, "Data")
+writeData(wb2, sheet = "Data", combined_mat_2, startCol = 1)
+writeData(wb2, sheet = "Data", queue_b, startCol = 6)
+saveWorkbook(wb2, file = "Output_2.xlsx", overwrite = TRUE)
+###
 
+# put all the data into a data frame
+df_french <- cbind(arrive_time_f, station_choice_f, queue_f, waiting_time_f, french_time, finish_time_f)
+colnames(df_french) <- c("arrive_time_f", "station_choice_f", "qf1", "qf2", "qf3", "qf4", "qf5", "waiting_time_f", "french_time", "finish_time_f")
+df_british <- cbind(arrive_time_b, station_choice_b, queue_b, waiting_time_b, british_time, finish_time_b)
+colnames(df_british) <- c("arrive_time_b", "station_choice_b", "qb1", "qb2", "qb3", "qb4", "qb5", "waiting_time_b", "british_time", "finish_time_b")
+df_simulation <- cbind(df_french, df_british)
+wb <- createWorkbook()
+addWorksheet(wb, "Data")
+writeData(wb, sheet = "Data", df_simulation, startCol = 1)
+saveWorkbook(wb, file = "Output_final.xlsx", overwrite = TRUE)
 
 
 qsim <- function(mf, mb, a.rate, trb, trf, tmb, tmf, maxb) {
