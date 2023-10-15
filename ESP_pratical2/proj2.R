@@ -285,13 +285,17 @@ for (i in 1:num_car) {
 ### 2023.10.15 ———————————————————————————————————————————————————————————————————————————————
 # 2 country 5 stations
 # Basic parameters
-total_time <- 500
-closed_time <- 490
-tmf <- 40
-trf <- 30
+# total_time <- 500
+# closed_time <- 490
+total_time <- 2 * 60 * 60
+closed_time <- total_time - 30 * 60
+
+tmf <- 30
+trf <- 40
 mf <- 5
+
 tmb <- 40
-trb <- 30
+trb <- 40
 mb <- 5
 
 # Simulate cars
@@ -329,7 +333,7 @@ for (i in 1:num_car) {
     finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
   } else {
     processing_car <- (group[group_length - queue_f[i, queue_index]] - time_point)
-    waiting_time_f[i] <- processing_car + sum(group[[(group_length - (queue_f[i, queue_index]) + 1):group_length]])
+    waiting_time_f[i] <- processing_car + sum(group[(group_length - (queue_f[i, queue_index]) + 1):group_length])
     finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
   }
   stations_record_f[[queue_index]][group_length + 1] <- finish_time_f[i]
@@ -412,7 +416,7 @@ for (i in 1:num_car) {
     finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
   } else {
     processing_car <- (group[group_length - queue_b[i, queue_index]] - time_point)
-    waiting_time_b[i] <- processing_car + sum(group[[(group_length - (queue_b[i, queue_index]) + 1):group_length]])
+    waiting_time_b[i] <- processing_car + sum(group[(group_length - (queue_b[i, queue_index]) + 1):group_length])
     finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
   }
   stations_record_b[[queue_index]][group_length + 1] <- finish_time_b[i]
