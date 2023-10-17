@@ -449,6 +449,131 @@ writeData(wb, sheet = "Data", df_simulation, startCol = 1)
 saveWorkbook(wb, file = "Output_final.xlsx", overwrite = TRUE)
 
 
+
+
+
+
+
+
+
+
+### 2023.10.17
+# 2 country 5 stations
+# Basic parameters
+# total_time <- 500
+# closed_time <- 490
+total_time <- 2 * 60 * 60
+closed_time <- total_time - 30 * 60
+
+tmf <- 30
+trf <- 40
+mf <- 5
+
+tmb <- 60
+trb <- 40
+mb <- 5
+
+# Simulate cars
+set.seed(66)
+car_timetable <- sample(c(0, 1), size = total_time, replace = TRUE, prob = c(0.9, 0.1))
+car_timetable[(closed_time + 1):total_time] <- 0 # check-in closes 30 minutes before departure
+arrive_time_f <- which(car_timetable == 1)
+num_car <- length(arrive_time_f)
+
+
+#———————————————————————————————————————————————————————————————————————————————
+### French Part
+# Simulated original data for French stations
+french_time <- runif(n = num_car, min = tmf, max = tmf + trf) ## 把french time随机到每个车上
+
+# Initialization French stations
+waiting_time_f <- rep(0, num_car)
+finish_time_f <- rep(0, num_car)
+station_choice_f <- rep(0, num_car)
+queue_f <- matrix(0, nrow = num_car, ncol = mf)
+stations_record_f <- list(fs1 = NULL, fs2 = NULL, fs3 = NULL, fs4 = NULL, fs5 = NULL)
+
+
+# French stations
+for (i in 1:num_car) {
+  time_point <- arrive_time_f[i]
+  queue_index <- which.min(queue_f[i,])[1]
+  station_choice_f[i] <- queue_index
+  group <- stations_record_f[[queue_index]]
+  group_length <- length(group)
+  if (queue_f[i, queue_index] == 0) {
+    finish_time_f[i] <- time_point + french_time[i]
+  } else if (queue_f[i, queue_index] == 1) {
+    waiting_time_f[i] <- group[[group_length]] - time_point
+    finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
+  } else {
+    processing_car <- group[group_length - queue_f[i, queue_index] + 1] - time_point
+    waiting_time_f[i] <- processing_car + sum(french_time[(group_length - (queue_f[i, queue_index]) + 2):group_length])
+    finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
+  }
+  stations_record_f[[queue_index]][group_length + 1] <- finish_time_f[i]
+  if (i != num_car) {
+    for (j in 1:mf) {
+      k <- which(station_choice_f == j)
+      queue_f[i + 1, j] <- length(k) - sum(finish_time_f[k] < arrive_time_f[i + 1])
+    }
+  }
+}
+
+
+#———————————————————————————————————————————————————————————————————————————————
+### British Part
+# Simulated original data for British stations
+british_time <- runif(n = num_car, min = tmb, max = tmb + trb)
+
+# Initialization British stations
+arrive_time_b <- finish_time_f
+waiting_time_b <- rep(0, num_car)
+finish_time_b <- rep(0, num_car)
+station_choice_b <- rep(0, num_car)
+queue_b <- matrix(0, nrow = num_car, ncol = mf)
+stations_record_b <- list(bs1 = NULL, bs2 = NULL, bs3 = NULL, bs4 = NULL, bs5 = NULL)
+
+
+# British stations
+for (i in 1:num_car) {
+  time_point <- arrive_time_b[i]
+  queue_index <- which.min(queue_b[i,])[1]
+  station_choice_b[i] <- queue_index
+  group <- stations_record_b[[queue_index]]
+  group_length <- length(group)
+  if (queue_b[i, queue_index] == 0) {
+    finish_time_b[i] <- time_point + british_time[i]
+  } else if (queue_b[i, queue_index] == 1) {
+    waiting_time_b[i] <- group[[group_length]] - time_point
+    finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
+  } else {
+    processing_car <- group[group_length - queue_b[i, queue_index] + 1] - time_point
+    waiting_time_b[i] <- processing_car + sum(british_time[(group_length - (queue_b[i, queue_index]) + 2):group_length])
+    finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
+  }
+  stations_record_b[[queue_index]][group_length + 1] <- finish_time_b[i]
+  if (i != num_car) {
+    for (j in 1:mb) {
+      k <- which(station_choice_b == j)
+      queue_b[i + 1, j] <- length(k) - sum(finish_time_b[k] < arrive_time_b[i + 1])
+    }
+  }
+}
+
+
+queue_f_sum <- rowSums(queue_f)
+queue_b_sum <- rowSums(queue_b)
+
+for (i in 1:num_car) {
+  if (queue_b_sum[i] > 100){
+    queue_f_sum[i] =+ queue_b_sum[i] - 100
+    queue_b_sum[i] <- queue_b_sum[i] - 100
+  }
+}
+
+
+
 qsim <- function(mf, mb, a.rate, trb, trf, tmb, tmf, maxb) {
   car_timetable <- sample(c(0, 1), size = 2 * 60 * 60, replace = TRUE, prob = c(0.9, 0.1))
   french_time <- round(runif(n = 2 * 60 * 60, min = tmf, max = tmf + trf), 0)
