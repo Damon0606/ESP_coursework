@@ -996,6 +996,18 @@ df_time <- data.frame(time = 1:total_time)
 df_final <- merge(df_time, df_french, by.x = "time", by.y = "arrive_time_f", all.x = T, all.y = T)
 df_final <- merge(df_final,df_british,by.x = "time", by.y = "arrive_time_b", all.x = T, all.y = T)
 
+# 填充
+reversed_df <- df_final[nrow(df_final):1, ]
+for (col in 1:ncol(reversed_df)) {
+  for (row in 2:nrow(reversed_df)) {
+    if (is.na(reversed_df[row, col])) {
+      reversed_df[row, col] <- reversed_df[row - 1, col]
+    }
+  }
+}
+reversed_df[is.na(reversed_df)] <- 0
+df_final <- reversed_df[nrow(reversed_df):1, ]
+
 #!!!!!没填充
 for (i in 1:length(df_final$time)) {
   if (df_final$queue_b_sum[i] > 100) {
