@@ -189,7 +189,7 @@ elapsed_time # 输出运行时间 macbook pro 2021(m1 pro 32GB/1TB)为1.14分钟
 
 
 
-########## HHT coment
+#### 10.19 add comments
 # Huantong Hou (s2481591), Yuqi Shi (s2508879), Zukai Li (s2505721)
 
 # Contribution:
@@ -199,9 +199,9 @@ elapsed_time # 输出运行时间 macbook pro 2021(m1 pro 32GB/1TB)为1.14分钟
 ###### (3)
 
 #### Yuqi Shi (s2508879): 35%
-###### (1)
-###### (2)
-###### (3)
+###### (1) Analyze and calculate various situations that may occur during the simulation, calculate the excess waiting time for French station
+###### (2) writing codes for the average lengths in rest time(after the finial car leave the stations),plot the result and the probability 
+###### (3) write the 1/3 comments and simplify the final codes
 
 #### Zukai Li (s2505721): 32%
 ###### (1)
@@ -401,3 +401,111 @@ qsim <- function(mf, mb, a.rate, trb, trf, tmb, tmf, maxb) {
       }
     }
   }
+
+  # Organize the data from the French and British stations in loop
+  ## Calculate the total queues length(use 'rowSums()') at the French and British stations for each car arrival at the station-
+  ## -and create two data-frames(df_french and df_british) with the length (queue_f/b_sum) and cars arrival times(arrive_time_f/b)
+  df_french<-as.data.frame(cbind(arrive_time_f,rowSums(queue_f,na.rm = TRUE)))
+  colnames(df_french) <- c("arrive_time_f", "queue_f_sum")
+  df_british <- as.data.frame(cbind(arrive_time_b,rowSums(queue_b,na.rm = TRUE)))
+  colnames(df_british) <- c("arrive_time_b", "queue_b_sum")
+  
+  # Calculate queues length after the last car arrived the station
+  ## For the French station, firstly we find the total queues length when the last vehicle enters the station. (last_number_f)
+  ## Then, find the finish time for these cars at the French station.These times are considered as the times the total queues length changed. (df_french_new[,1])
+  ## Finally, the total queues length decreases until there are no cars in the queue(df_french_new[,2])
+  last_number_f<-df_french$queue_f_sum[length(df_french$queue_f_sum)]+1
+  df_french_new<-matrix(0,last_number_f,2)
+  df_french_new[,1] <- sort(head(sort(finish_time_f, decreasing = TRUE), last_number_f),decreasing = FALSE)
+  df_french_new[,2] <- seq(last_number_f-1, 0)
+  colnames(df_french_new)<-c("arrive_time_f","queue_f_sum")
+  df_french<-rbind(df_french,df_french_new) ### Merge ‘df_french_new’ vertically to the end of ‘df_french’
+  ## Unlike the French station, the British station may not have processed all the queued vehicles within 7200 seconds. 
+  ## Therefore, we only consider the finish times of cars that were in the queue when the last vehicle entered the station and could be processed within 7200 seconds. (df_british_new_part)
+  ## These times are used to track changes in the total queues length, which gradually decreases until the station is closed (df_british_new[,2])
+  last_number_b<-df_british$queue_b_sum[length(df_british$queue_b_sum)]+1
+  df_british_new_all<-sort(head(sort(finish_time_b, decreasing = TRUE), last_number_b),decreasing = FALSE)
+  df_british_new_part<-df_british_new_all[df_british_new_all<=7200]
+  df_british_new<-matrix(0,length(df_british_new_part),2)
+  df_british_new[,1]<-df_british_new_part
+  df_british_new[,2]<-seq(last_number_b-1, last_number_b-length(df_british_new_part))
+  colnames(df_british_new)<-c("arrive_time_b","queue_b_sum")
+  df_british<-rbind(df_british,df_british_new)### Merge ‘df_british_new’ vertically to the end of ‘df_british’
+  
+  ## Merge the total queues length at the station when each car arrive the stations to the time vector of 7200 seconds
+  df_time <- data.frame(time = 1:total_time)
+  df_final <- merge(df_time, df_french, by.x = "time", by.y = "arrive_time_f", all.x = T, all.y = T)
+  df_final <- merge(df_final,df_british,by.x = "time", by.y = "arrive_time_b", all.x = T, all.y = T)
+  
+  ## After the processing in the previous step, ‘df_final’ have some NA at some seconds when no car entered
+  ## Assumption: There will be no queued cars leaving the station between two consecutive entering cars (based on the data, it indeed appears that such a situation does not exist)
+  ## We fill the NA at the seconds between two cars with the data from the later vehicle (the total queues length after the arrival of the preceding vehicle)
+  
+  ### However, filling with the next non-NA value using a loop has a high time complexity and longer runtime. —
+  ### —Therefore, we first reverse 'df_final' and then fill it with the data from the previous car, which will significantly reduce the runtime
+  reversed_df <- df_final[nrow(df_final):1, ]
+  for (col in 1:ncol(reversed_df)) {
+    for (row in 2:nrow(reversed_df)) {
+      if (is.na(reversed_df[row, col])) {
+        reversed_df[row, col] <- reversed_df[row - 1, col]
+      }
+    }
+  }
+  ### For the initial NA in the ‘reversed_df’, we will fill them with the first non-empty value(!is.na('value_name'))
+  reversed_df$queue_f_sum[is.na(reversed_df$queue_f_sum)] <- reversed_df$queue_f_sum[!is.na(reversed_df$queue_f_sum)][1]
+  reversed_df$queue_b_sum[is.na(reversed_df$queue_b_sum)] <- reversed_df$queue_b_sum[!is.na(reversed_df$queue_b_sum)][1]
+  df_final <- reversed_df[nrow(reversed_df):1, ]### After filling, restore the reversed ‘df_final’ to its original order
+
+  ## We considered that when the total queues length in the British over 100, the cars from the French station will no longer be able to enter the British stations
+  ## So we will add the portion of the British station queues length that exceeds 100 back to the French stations
+  for (i in 1:length(df_final$time)) {
+    if (df_final$queue_b_sum[i] > 100) { ### Check if the total queues length at the British station is greater than 100
+      df_final$queue_f_sum[i]<-df_final$queue_f_sum[i]+(df_final$queue_b_sum[i]-100) 
+      df_final$queue_b_sum[i] <- 100
+    }
+  }
+  ### Calculate the average length of the French and British stations for each seconds
+  df_final$queue_f_ave <- (1 / 5) * df_final$queue_f_sum 
+  df_final$queue_b_ave <- (1 / 5) * df_final$queue_b_sum
+  
+  ### Calculate the average expected waiting time for each seconds
+  ### Average expected waiting time =  average length of French stations*average processing time in French + average length of British stations*average processing time in British )
+  df_final$expected_time <-df_final$queue_f_ave*((tmf+tmf+trf)/2)+df_final$queue_b_ave*((tmb+tmb+trb)/2) ### processing time modelled as uniform, so the average time equal to (min + max)/2
+  result <- list(nf = df_final$queue_f_ave,nb = df_final$queue_b_ave,eq=df_final$expected_time)
+  return(result)
+}
+# Conduct two simulations using the ‘qsim’ function, in simulation2 the value of ‘tmb’ is 40
+simulation1<-qsim(5, 5, .1, 40, 40, 30, 30, 20)
+simulation2<-qsim(5, 5, .1, 40, 40, 40, 30, 20)
+
+# produce the 4 panel based on the results of the simulation1&2
+par(mfrow = c(2, 2)) ### set the parameter of the plots to 2*2 
+
+## the first plot: how the French(red)and British(blue)queue lengths('nf'&'nb') are changing over time
+plot(simulation1$nf, col = "red", type = 'l',xlab = "Time", ylab = "Average Lengths ", main = "Two Types of Stations in Simulation1(tmb=30)",xlim = c(0,7200),ylim = c(0,max(simulation1$nb)*1.5))
+lines(simulation1$nb, col = "blue") ### For the completeness and aesthetics, we set the maximum value of the y-axis to 1.5 times the maximum value of "nb"
+legend("topright", legend = c("French", "British"), col = c("red", "blue"), lty = 1) ### Add a legend to the plot
+
+## the second plot: how the expected queuing time('eq') changes over time
+plot(simulation1$eq,col = 'black',type = 'l',xlab = "Time", ylab = "Average Expected Waiting Time ",xlim = c(0,7200),ylim = c(0,max(simulation1$eq)))
+
+## the third plot: how the French(red)and British(blue)queue lengths('nf'&'nb') are changing over time when 'tmb' equal to 40 (in simulation2)
+plot(simulation2$nf, col = "red", type = 'l',xlab = "Time", ylab = "Average Lengths ", main = "Two Types of Stations in Simulation2(tmb=40)",xlim = c(0,7200),ylim = c(0,max(simulation2$nb)*1.5))
+lines(simulation2$nb, col = "blue")
+legend("topleft", legend = c("French", "British"), col = c("red", "blue"), lty = 1) ### Add a legend to the plot
+
+## the forth plot: how the expected queuing time('eq') changes over time when 'tmb' equal to 40 (in simulation2)
+plot(simulation2$eq,col = 'black',type = 'l',xlab = "Time", ylab = "Average Expected Waiting Time ",xlim = c(0,7200),ylim = c(0,max(simulation2$eq)))
+
+# Estimate the probability of at least one car missing the ferry departure
+## Regarding the runtime of these 100 simulation runs: The simulations were completed in approximately 1.14 minutes using the MacBookPro 2021 (32GB/1TB)
+missing_number<-c()
+for (i in 1:100) {
+  simulation_temp<-qsim(5, 5, .1, 40, 40, 30, 30, 20)
+  if(simulation_temp$nb[length(simulation_temp$nb)]>0){
+    missing_number[i]<-1 ##return 1 if the last value of "nb" (the total queue length at the final time) is greater than 0,indicating that a car missed the ferry during this simulation
+  }else{
+    missing_number[i]<-0 ## Otherwise, return 0
+  }
+}
+probability_missing<-sum(missing_number)/100 ## probability of the car missing the ferry departure = sum of the missing_number / 100
