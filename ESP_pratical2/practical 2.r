@@ -1,82 +1,3 @@
-# Huantong Hou (s2481591), Yuqi Shi (s2508879), Zukai Li (s2505721)
-
-# Contribution:
-#### Huantong Hou (s2481591): 33%
-###### (1)
-###### (2)
-###### (3)
-
-#### Yuqi Shi (s2508879): 35%
-###### (1)
-###### (2)
-###### (3)
-
-#### Zukai Li (s2505721): 32%
-###### (1)
-###### (2)
-###### (3)
-
-
-# ———————————————————————————————————————————————————————————————————————————————
-### Code Objective and Functional Description:
-# This practical is about writing a function to simulate cars passing through
-# French and then British passport control at a French ferry terminal.
-
-
-### This code is divided into the following 3 main sections：
-## 1. Write a function, qsim, to simulate vehicle passing through French passport
-# control and British passport control at French ferry terminal:
-  # (1) Set up fixed parameters and simulate the car arrivals randomly from them;
-  # (2) Analyse car queues at each station in France;
-  # (3) Analyse car queues at each station in Britain;
-  # (4) Integrate and process the simulated data, and compute the data needed 
-  #     for the function to return.
-  # The  
-
-## 2. Plotting the simulation results:
-  # Generate a 4-panel, 2-row, 2-column plot using the written qsim function to
-  # show the change in queue length over time for France and the UK and the 
-  # expected queue processing time over time for two different sets of parameter 
-  # conditions, respectively.
-
-## 3. Estimate the probability of missing the ferry departure:
-  # Estimate the probability that at least one car will miss the ferry departure 
-  # by running the written qsim function 100 times.
-
-
-### Assumptions for the simulation model:
-## 1. Cars are only likely to arrive 2 hours before ferry departure and no cars 
-    # arrive in the last 30 minutes before departure (but can handle those that 
-    # have arrived). At the beginning there were no cars lined up at either the 
-    # French or British stations.
-## 2. The time step of the simulation is 1 second, and the probability of a 
-    # vehicle arriving at a French station at each second is 0.1, but the 
-    # probability of 2 or more vehicles arriving at the same second is ignored.
-## 3. At both French and British stations, cars always choose the shortest queue 
-    # to line up in upon arrival and do not change queues midway through.
-## 4. For both French and British stations, the time taken between the leaving 
-    # of one car and the start of processing the next is ignored. 
-## 5. The time taken by the vehicle to move from the French station to the 
-    # British station is also not taken into account.
-## 6. There can only be a maximum of 20 cars queuing at the same time at each 
-    # British station, and when there is a situation where all the UK stations 
-    # are full, the cars that have completed their processing at the French 
-    # station must wait in place until at least one empty space appears at one 
-    # of the UK stations before they can enter the UK station to be processed.
-## 7. The processing time of the car at the French station and the processing 
-    # time at the British station is a random number following a uniform 
-    # distribution [tmf, tmf+trf] and a uniform distribution [tmb, tmb+trb], 
-    # respectively.
-## 8. In showing the changing queue lengths over time at French and UK stations, 
-    # data obtained by calculating the average length of queues at all five 
-    # stations in France and the Britain, respectively, are used.
-## 9. In showing expected queuing time over time, the total expected queuing 
-    # time is approximated by French queue length on arrival multiplied by
-    # calculating expected French handling time + mean British queue length at 
-    # that time multiplied by the expected UK handling time, not taking into 
-    # account the blocking time due to the British queue being full.
-
-# ———————————————————————————————————————————————————————————————————————————————
 start_time <- Sys.time() # 记录开始时间
 total_time <- 2 * 60 * 60
 closed_time <- total_time - 30 * 60
@@ -269,6 +190,86 @@ elapsed_time # 输出运行时间 macbook pro 2021(m1 pro 32GB/1TB)为1.14分钟
 
 
 ########## HHT coment
+# Huantong Hou (s2481591), Yuqi Shi (s2508879), Zukai Li (s2505721)
+
+# Contribution:
+#### Huantong Hou (s2481591): 33%
+###### (1)
+###### (2)
+###### (3)
+
+#### Yuqi Shi (s2508879): 35%
+###### (1)
+###### (2)
+###### (3)
+
+#### Zukai Li (s2505721): 32%
+###### (1)
+###### (2)
+###### (3)
+
+
+# ———————————————————————————————————————————————————————————————————————————————
+### Code Objective and Functional Description:
+# This practical is about writing a function to simulate cars passing through
+# French and then British passport control at a French ferry terminal.
+
+
+### This code is divided into the following 3 main sections：
+## 1. Write a function, qsim, to simulate vehicle passing through French passport
+# control and British passport control at French ferry terminal:
+  # (1) Set up fixed parameters and simulate the car arrivals randomly from them;
+  # (2) Analyse car queues at each station in France;
+  # (3) Analyse car queues at each station in Britain;
+  # (4) Integrate and process the simulated data, and compute the data needed 
+  #     for the function to return.
+  # The  
+
+## 2. Plotting the simulation results:
+  # Generate a 4-panel, 2-row, 2-column plot using the written qsim function to
+  # show the change in queue length over time for France and the UK and the 
+  # expected queue processing time over time for two different sets of parameter 
+  # conditions, respectively.
+
+## 3. Estimate the probability of missing the ferry departure:
+  # Estimate the probability that at least one car will miss the ferry departure 
+  # by running the written qsim function 100 times.
+
+
+### Assumptions for the simulation model:
+## 1. Cars are only likely to arrive 2 hours before ferry departure and no cars 
+    # arrive in the last 30 minutes before departure (but can handle those that 
+    # have arrived). At the beginning there were no cars lined up at either the 
+    # French or British stations.
+## 2. The time step of the simulation is 1 second, and the probability of a 
+    # vehicle arriving at a French station at each second is 0.1, but the 
+    # probability of 2 or more vehicles arriving at the same second is ignored.
+## 3. At both French and British stations, cars always choose the shortest queue 
+    # to line up in upon arrival and do not change queues midway through.
+## 4. For both French and British stations, the time taken between the leaving 
+    # of one car and the start of processing the next is ignored. 
+## 5. The time taken by the vehicle to move from the French station to the 
+    # British station is also not taken into account.
+## 6. There can only be a maximum of 20 cars queuing at the same time at each 
+    # British station, and when there is a situation where all the UK stations 
+    # are full, the cars that have completed their processing at the French 
+    # station must wait in place until at least one empty space appears at one 
+    # of the UK stations before they can enter the UK station to be processed.
+## 7. The processing time of the car at the French station and the processing 
+    # time at the British station is a random number following a uniform 
+    # distribution [tmf, tmf+trf] and a uniform distribution [tmb, tmb+trb], 
+    # respectively.
+## 8. In showing the changing queue lengths over time at French and UK stations, 
+    # data obtained by calculating the average length of queues at all five 
+    # stations in France and the Britain, respectively, are used.
+## 9. In showing expected queuing time over time, the total expected queuing 
+    # time is approximated by French queue length on arrival multiplied by
+    # calculating expected French handling time + mean British queue length at 
+    # that time multiplied by the expected UK handling time, not taking into 
+    # account the blocking time due to the British queue being full.
+
+# ———————————————————————————————————————————————————————————————————————————————
+
 ### Initialize  simulation period
 total_time <- 2 * 60 * 60 # 2 hours totally, 60minutes/hour, 60seconds/minute
 closed_time <- total_time - 30 * 60 # period for car arrival (check-in closes 30 minutes before departure)
