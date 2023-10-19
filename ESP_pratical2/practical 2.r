@@ -186,3 +186,138 @@ probability_missing<-sum(missing_number)/100
 end_time <- Sys.time() # 记录结束时间
 elapsed_time <- end_time - start_time # 计算代码段运行的时间差
 elapsed_time # 输出运行时间 macbook pro 2021(m1 pro 32GB/1TB)为1.14分钟，单个simulation 为0.7-0.8秒
+
+
+
+########## HHT coment
+### Initialize  simulation period
+total_time <- 2 * 60 * 60 # 2 hours totally, 60minutes/hour, 60seconds/minute
+closed_time <- total_time - 30 * 60 # period for car arrival (check-in closes 30 minutes before departure)
+
+
+## Simulation of queues of French stations and British stations
+## Input: {mf: number of French stations, mb: number of British stations, 
+##         a.rate: probability of an arrival each second, trb: , trf:,
+##         tmb: minimum British handling time, tmf: minimum French handling time,
+##         maxb: available number of cars in each British station's queue}
+## Purpose: Simulate the entire process of each car passing through the French and British stations
+## Output: {nf: the average length of french queues, for each simulation second,
+##          nb: the average length of british queues, for each simulation second,
+##          eq: the average expected waiting time (sum of each stations' queue lengths*average handling time)}
+qsim <- function(mf, mb, a.rate, trb, trf, tmb, tmf, maxb) {
+  # generate all time points of car arrival by simulating vectors of 0 and 1, 1 means car arrival
+  # probability of 0.1 for obtaining 1 means probability of 0.1 of an arrival each second
+  car_timetable <- sample(c(0, 1), size = total_time, replace = TRUE, prob = c(0.9, 0.1))
+  car_timetable[(closed_time + 1):total_time] <- 0 # no cars arriving within the 30 minutes after the stations closed
+  # to facilitate simulating the queue situation for each car
+  arrive_time_f <- which(car_timetable == 1) # find a list of all the time points when cars arrived
+  num_car <- length(arrive_time_f) # to iterate through each car
+  
+  ### ———————————————————————————————————————————————————————————————————————————————
+  ### Simulation of French stations Part
+  # simulate french handling time for each car to obtain waiting time for queued cars
+  french_time <- runif(n = num_car, min = tmf, max = tmf + trf)
+  ## Initialization situations of each arrival car in French stations
+  ## Since car's waiting time would impact its finish time and the finish time would impact queue lengths 
+  ## and the queue lengths would impact car's station choice
+  waiting_time_f <- rep(0, num_car) # time period for a car from its arrival at the station until it can be processed
+  finish_time_f <- rep(0, num_car) # departing time from the french station, indexed by car's arrival time
+  # help to find queue length of chosen station
+  station_choice_f <- rep(0, num_car) 
+  # help to calculate average queue length
+  queue_f <- matrix(0, nrow = num_car, ncol = mf) # queue lengths for each station just before the car arrives
+  # in order to track the finish times for each station and 
+  # allow coming cars to make decisions on station choice regarding the station with the earliest finish time.
+  stations_record_f <- list(fs1 = NULL, fs2 = NULL, fs3 = NULL, fs4 = NULL, fs5 = NULL)# same data as finish_time_f but indexed by station
+  
+  ## totally consider three scenarios for cars arriving french stations based on different waiting_time: 
+  ## All of finish_time is (arrival time point + waiting time + handling time)
+  ## 1. at least one station is available, allowing the car to be processed immediately
+  ## 2. each station has only one car being processed
+  ## 3. at least one station has two or more cars in the queue, requiring the car to wait its turn for handling.
+  ## the difference between scenario 2 and 3 is: waiting time for cars in queue
+  for (i in 1:num_car) {
+    time_point <- arrive_time_f[i]
+    # decide choice of station
+    queue_index <- which.min(queue_f[i, ])[1]# find station index of shortest queue
+    station_choice_f[i] <- queue_index
+    # find the scenario of french station based on queue length of chosen station
+    group <- stations_record_f[[queue_index]] # "[[]]" means find a element while "[]"means find a series
+    group_length <- length(group) # choice of scenario based on queue length
+    if (queue_f[i, queue_index] == 0) { # first scenario
+      finish_time_f[i] <- time_point + french_time[i] # no waiting time, only handling time
+    } else if (queue_f[i, queue_index] == 1) { # second scenario
+      # the remaining handling time for the car being processed when a new car arrives
+      waiting_time_f[i] <- group[[group_length]] - time_point 
+      finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
+    } else {# third scenario
+      # the remaining handling time of processed car
+      processing_car <- group[group_length - queue_f[i, queue_index] + 1] - time_point 
+      # ???解释不清楚+2
+      waiting_time_f[i] <- processing_car + sum(french_time[(group_length - (queue_f[i, queue_index]) + 2):group_length])
+      finish_time_f[i] <- time_point + waiting_time_f[i] + french_time[i]
+    }
+    # update the finish time records of station after a car handled
+    stations_record_f[[queue_index]][group_length + 1] <- finish_time_f[i]
+    # when 
+    if (i != num_car) {
+      for (j in 1:mf) {
+        k <- which(station_choice_f == j)# 为什么不可以直接用station_choice_f?是更新一整行的排队情况吗？
+        # 下一辆车过来时候车站的排队情况就是现在的总队伍长度-下一辆车来之前走掉的车的数量？
+        queue_f[i + 1, j] <- length(k) - sum(finish_time_f[k] < arrive_time_f[i + 1])
+      }
+    }
+  }
+  
+  ### ———————————————————————————————————————————————————————————————————————————————
+  ### Simulation of British stations Part
+  # simulate british handling time for each car to obtain waiting time for queued cars
+  british_time <- runif(n = num_car, min = tmb, max = tmb + trb)
+  ## Initialization situations of each arrival car in British stations
+  ## Since car's waiting time would impact its finish time and the finish time would impact queue lengths 
+  ## and the queue lengths would impact car's station choice (same as french station)
+  arrive_time_b <- finish_time_f # ignore the time period from french station to british station
+  waiting_time_b <- rep(0, num_car) # time period for a car from its arrival at the station until it can be processed
+  finish_time_b <- rep(0, num_car) # departing time from the british station, indexed by car's arrival time
+  # help to find queue length of chosen station
+  station_choice_b <- rep(0, num_car)
+  # help to calculate average queue length
+  queue_b <- matrix(0, nrow = num_car, ncol = mf) # queue lengths for each station just before the car arrives
+  # in order to track the finish times for each station and 
+  # allow coming cars to make decisions on station choice regarding the station with the earliest finish time.
+  stations_record_b <- list(bs1 = NULL, bs2 = NULL, bs3 = NULL, bs4 = NULL, bs5 = NULL)
+  
+  ## totally consider three similar scenarios for cars arriving british stations as frensh stations
+  ## but one different thing is the maximum queue number of british station is 20.
+  ## here, 我们把多余的队伍长度在后面加到法国站？
+  for (i in 1:num_car) {
+    time_point <- arrive_time_b[i]
+    # decide choice of station
+    queue_index <- which.min(queue_b[i, ])[1]# find station index of shortest queue
+    station_choice_b[i] <- queue_index
+    # find the scenario of british station based on queue length of chosen station
+    group <- stations_record_b[[queue_index]] # "[[]]" means find a element while "[]"means find a series
+    group_length <- length(group)# choice of scenario based on queue length
+    if (queue_b[i, queue_index] == 0) {# first scenario
+      finish_time_b[i] <- time_point + british_time[i]# no waiting time, only handling time
+    } else if (queue_b[i, queue_index] == 1) {# second scenario
+      # the remaining handling time for the car being processed when a new car arrives
+      waiting_time_b[i] <- group[[group_length]] - time_point
+      finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
+    } else {# third scenario
+      # the remaining handling time of processed car
+      processing_car <- group[group_length - queue_b[i, queue_index] + 1] - time_point
+      # ???解释不清楚+2
+      waiting_time_b[i] <- processing_car + sum(british_time[(group_length - (queue_b[i, queue_index]) + 2):group_length])
+      finish_time_b[i] <- time_point + waiting_time_b[i] + british_time[i]
+    }
+    # update the finish time records of station after a car handled
+    stations_record_b[[queue_index]][group_length + 1] <- finish_time_b[i]
+    if (i != num_car) {
+      for (j in 1:mb) {
+        k <- which(station_choice_b == j)# 为什么不可以直接用station_choice_f?是更新一整行的排队情况吗？
+        # 下一辆车过来时候车站的排队情况就是现在的总队伍长度-下一辆车来之前走掉的车的数量？
+        queue_b[i + 1, j] <- length(k) - sum(finish_time_b[k] < arrive_time_b[i + 1])
+      }
+    }
+  }
