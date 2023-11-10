@@ -53,9 +53,6 @@ forward(nn, inp)
 # k: the loss corresponding to output class k for network nn
 backward <- function(nn, k) {
   n <- length(nn$h)
-  nn$dh <- vector("list", n)
-  nn$dW <- vector("list", n-1)
-  nn$db <- vector("list", n-1)
   
   # Loss
   # L = -sum(log(nn$dh[[n]])/n)
