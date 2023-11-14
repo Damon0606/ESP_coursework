@@ -298,3 +298,151 @@ misclassification <- function(nn, test_data, test_k){
   cat("Misclassification Rate on test set:", misclassificationRate, "\n")
 }
 misclassification(nn, test_data, test_labels)
+
+
+
+
+#——————————————————————————————————————————————————————————
+#——————————————————————————————————————————————————————————
+#——————————————————————————————————————————————————————————
+# 2023.11.14 update
+# practical 4 draft
+
+# ———————————————————————————————————————————————————————————————————————————————
+# netup函数：创建表示网络的列表
+# d: a vector giving the number of nodes in each layer of a network
+netup <- function(d) {
+  network <- list()
+  network$h <- vector("list", length(d))
+  network$W <- vector("list", length(d) - 1)
+  network$b <- vector("list", length(d) - 1)
+
+  # 初始化权重和偏置
+  for (l in 1:(length(d) - 1)) {
+    network$W[[l]] <- matrix(runif(d[l + 1] * d[l], min = 0, max = 0.2), nrow = d[l + 1], ncol = d[l])
+    network$b[[l]] <- runif(d[l + 1], min = 0, max = 0.2)
+  }
+  return(network)
+}
+
+
+# ———————————————————————————————————————————————————————————————————————————————
+# forward函数：计算网络中每个节点的值
+# nn: a network list as returned by "netup"
+# inp: a vector of input values for the first layer
+forward <- function(nn, inp) {
+  nn$h[[1]] <- t(inp)
+
+  for (l in 2:length(nn$h)) {
+    Zeros <- matrix(0, nrow = dim(nn$W[[l - 1]])[1], ncol = dim(nn$h[[l - 1]])[2])
+    nn$h[[l]] <- pmax(Zeros, nn$W[[l - 1]] %*% nn$h[[l - 1]] + nn$b[[l - 1]])
+  }
+
+  return(nn)
+}
+
+
+# ———————————————————————————————————————————————————————————————————————————————
+# backward函数：计算损失函数对节点、权重和偏置的导数
+# nn: the return from "forward"
+# k: the loss corresponding to output class k for network nn
+backward <- function(nn, k) {
+  n <- length(nn$h)
+  class_number <- length(unique(k))
+  nn$dh <- nn$h
+  nn$dW <- nn$W
+  nn$db <- nn$b
+  nn$d <- nn$h
+  sample_size <- dim(nn$h[[1]])[2]
+
+  ## 计算d^L
+  for (j in 1:sample_size) {
+    for (i in 1:class_number) {
+      if (i == k[j]) {
+        nn$dh[[n]][i, j] <- (exp(nn$h[[n]][i, j]) / sum(exp(nn$h[[n]])[, j])) - 1
+      } else {
+        nn$dh[[n]][i, j] <- exp(nn$h[[n]][i, j]) / sum(exp(nn$h[[n]])[, j])
+      }
+    }
+  }
+
+  ## 计算剩余层的d,dw,db,
+  for (l in n:2) {
+    ## 计算各层的d & db
+    for (j in 1:sample_size) {
+      for (i in 1:class_number) {
+        if (nn$dh[[l]][i, j] > 0) {
+          nn$d[[l]][i, j] <- nn$dh[[l]][i, j]
+        } else {
+          nn$d[[l]][i, j] <- 0
+        }
+      }
+    }
+    nn$db[[l - 1]] <- nn$d[[l]]
+    nn$dh[[l - 1]] <- t(nn$W[[l - 1]]) %*% nn$d[[l]]
+    nn$dw[[l - 1]] <- nn$d[[l]] %*% t(nn$h[[l - 1]])
+  }
+  return(nn)
+}
+
+# data(iris)
+# iris <- iris[order(iris$Species), ]
+# inp <- as.matrix(iris[, 1:4])
+# test_indices <- seq(5, nrow(inp), by = 5)
+# train_indices <- setdiff(1:nrow(inp), test_indices)
+# test_data <- inp[test_indices, ]
+# train_data <- inp[train_indices, ]
+# numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+# test_labels <- numeric_category[test_indices]
+# train_labels <- numeric_category[train_indices]
+# 
+# 
+# n <- nrow(train_data)
+# batch_index <- sample(1:n, 10, replace = FALSE)
+# inp[batch_index, ]
+# train_labels[batch_index]
+# ff1 <- forward(nn, inp[batch_index, ])
+# ff1 <- backward(ff1, train_labels[batch_index])
+# 
+# for (l in 1:length(ff1$W)) {
+#   nn$W[[l]] <- nn$W[[l]] - .01 * nn$dW[[l]]
+#   nn$b[[l]] <- nn$b[[l]] - .01 * nn$db[[l]]
+# }
+
+# ———————————————————————————————————————————————————————————————————————————————
+# train函数：训练网络
+train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
+  n <- nrow(inp)
+  for (epoch in 1:nstep) {
+    batch_index <- sample(1:n, mb, replace = FALSE)
+    nn <- forward(nn, inp[batch_index, ])
+    nn <- backward(nn, k[batch_index])
+
+    for (l in 1:length(nn$W)) {
+      nn$W[[l]] <- nn$W[[l]] - eta * nn$dW[[l]]
+      nn$b[[l]] <- nn$b[[l]] - eta * nn$db[[l]]
+    }
+  cat(nn$W[[1]], '\n')
+  }
+  return(nn)
+}
+
+
+# ———————————————————————————————————————————————————————————————————————————————
+# 根据iris数据集训练网络
+
+# 划分训练集和测试集
+data(iris)
+iris <- iris[order(iris$Species), ]
+inp <- as.matrix(iris[, 1:4])
+test_indices <- seq(5, nrow(inp), by = 5)
+train_indices <- setdiff(1:nrow(inp), test_indices)
+test_data <- inp[test_indices, ]
+train_data <- inp[train_indices, ]
+numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+test_labels <- numeric_category[test_indices]
+train_labels <- numeric_category[train_indices]
+
+# 创建并训练网络
+nn <- netup(c(4, 8, 7, 3))
+network <- train(nn, train_data, train_labels, eta = .01, mb = 10, nstep = 10000)
