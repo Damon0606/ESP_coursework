@@ -217,11 +217,11 @@ numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species
 # k: the loss corresponding to output class k for network nn
 backward <- function(nn, k) {
   n <- length(nn$h)
-  class_number <- length(k)
-  nn$dh <- vector("list", n)
-  nn$d <- vector("list", n)
-  nn$dW <- vector("list", n - 1)
-  nn$db <- vector("list", n - 1)
+  class_number <- length(unique(k))
+  network <- list()
+  network$h <- vector("list", length(d))
+  network$W <- vector("list", length(d) - 1)
+  network$b <- vector("list", length(d) - 1)
   sample_size <- dim(nn$h[[1]])[2]
   # Loss
   # L = -sum(log(nn$dh[[n]])/n)
