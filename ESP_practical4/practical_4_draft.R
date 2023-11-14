@@ -219,6 +219,7 @@ backward <- function(nn, k) {
   n <- length(nn$h)
   class_number <- length(k)
   nn$dh <- vector("list", n)
+  nn$d <- vector("list", n)
   nn$dW <- vector("list", n - 1)
   nn$db <- vector("list", n - 1)
   sample_size <- dim(nn$h[[1]])[2]
