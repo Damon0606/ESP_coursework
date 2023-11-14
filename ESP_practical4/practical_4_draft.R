@@ -208,4 +208,50 @@ forward <- function(nn, inp) {
 }
 
 # Test
+
 nn<-forward(nn, inp)
+numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+# ———————————————————————————————————————————————————————————————————————————————
+# backward函数：计算损失函数对节点、权重和偏置的导数
+# nn: the return from "forward"
+# k: the loss corresponding to output class k for network nn
+backward <- function(nn, k) {
+  n <- length(nn$h)
+  class_number <- length(k)
+  nn$dh <- vector("list", n)
+  nn$dW <- vector("list", n - 1)
+  nn$db <- vector("list", n - 1)
+  sample_size <- dim(nn$h[[1]])[2]
+  # Loss
+  # L = -sum(log(nn$dh[[n]])/n)
+  ## 计算d^L
+  for (j in 1:sample_size) {
+    for (i in 1:class_number) {
+      if(i == k[j]){
+        nn$dh[[n]][i,j] <- (exp(nn$h[[n]][i,j]) / sum(exp(nn$h[[n]])[,j]))-1
+      }else{
+        nn$dh[[n]][i,j] <- exp(nn$h[[n]][i,j]) / sum(exp(nn$h[[n]])[,j])
+      }
+    }
+  }
+  
+  ## 计算剩余层的d,dw,db,
+
+  for (l in n:2) {
+    ## 计算各层的d & db
+    for (j in 1:sample_size) {
+      for (i in 1:class_number) {
+        if(nn$dh[[l]][i,j]>0){
+          nn$d[[l]][i,j] <- nn$dh[[l]][i,j]
+        }else{
+          nn$d[[l]][i,j] <- 0
+        }
+      }
+    }
+    nn$db[[l-1]] = nn$d[[l]]
+    nn$dh[[l-1]] = t(nn$W[[l-1]]) %*% nn$d[[l]]
+    nn$dw[[l-1]] = nn$d[[l]] %*% t(nn$h[[l-1]])
+  }
+  
+  return(nn)
+}
