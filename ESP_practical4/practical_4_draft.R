@@ -218,10 +218,16 @@ numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species
 backward <- function(nn, k) {
   n <- length(nn$h)
   class_number <- length(unique(k))
-  network <- list()
-  network$h <- vector("list", length(d))
-  network$W <- vector("list", length(d) - 1)
-  network$b <- vector("list", length(d) - 1)
+  ############# 只改了这些
+  nn$dh <- nn$h
+  nn$dW <- nn$W
+  nn$db <- nn$b
+  nn$d <- nn$h
+  # network <- list()
+  # network$h <- vector("list", length(d))
+  # network$W <- vector("list", length(d) - 1)
+  # network$b <- vector("list", length(d) - 1)
+  #############
   sample_size <- dim(nn$h[[1]])[2]
   # Loss
   # L = -sum(log(nn$dh[[n]])/n)
@@ -256,3 +262,39 @@ backward <- function(nn, k) {
   
   return(nn)
 }
+
+
+#### 加的train函数
+set.seed(123)
+test_indices <- seq(5, nrow(inp), by = 5)
+train_indices <- setdiff(1:nrow(inp), test_indices)
+test_data <- inp[test_indices, ]
+numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+test_labels <- numeric_category[test_indices]
+train_data <- inp[train_indices, ]
+train_labels <- numeric_category[train_indices]
+
+train <- function(nn, inp, k, eta=.01, mb=10, nstep=10000){
+  n <- nrow(inp)
+  for (epoch in 1:nstep) {
+    batches <- sample(1:n, mb, replace = FALSE)
+    for (i in batches) {
+      nn <- forward(nn, inp[i, ])
+      nn <- backward(nn, k[i])
+      for (l in 1:length(nn$W)){
+        nn$W[[l]] <- nn$W[[l]] - eta * t(nn$dW[[l]])
+        nn$b[[l]] <- nn$b[[l]] - eta * nn$db[[l]]
+      }
+    }
+  }
+}
+train(nn, train_data, train_labels, eta=.01, mb=10, nstep=10000)
+
+misclassification <- function(nn, test_data, test_k){
+  prediction <- forward(nn, test_data)
+  prediction_label <- max.col(prediction)+1
+  test_accuracy <- sum(prediction_label == test_k) / nrow(test_data)
+  misclassificationRate <- 1-test_accuracy
+  cat("Misclassification Rate on test set:", misclassificationRate, "\n")
+}
+misclassification(nn, test_data, test_labels)
