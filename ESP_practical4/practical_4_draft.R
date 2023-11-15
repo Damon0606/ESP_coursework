@@ -516,21 +516,28 @@ backward <- function(nn, k) {
   nn$dh <- nn$h; nn$dW <- nn$W;nn$db <- nn$b; nn$d <- nn$h
   # Loss
   # L = -sum(log(nn$dh[[n]])/n)
-  ## 计算d^L
+  ## 计算dh^L
   nn$dh[[n]] <- exp(nn$h[[n]]) / sum(exp(nn$h[[n]]))
   nn$dh[[n]][k] <- nn$dh[[n]][k]-1
   
   
   ## 计算剩余层的d,dW,db,
   for (l in n:2) {
-    nn$d[[l]] <- nn$dh[[l]]
-    Zeros <- matrix(0, nrow = length(nn$d[[l]]), ncol = 1)
-    nn$d[[l]] <- pmax(Zeros, nn$d[[l]])
+    h_length <- length(nn$h[[l]])
+    for (j in 1:h_length) {
+      if(nn$h[[l]][j] <=0){
+        nn$d[[l]][j] = 0
+      }else{
+        nn$d[[l]][j] = nn$dh[[l]][j]
+      }
+    }
     nn$db[[l-1]] <- nn$d[[l]]
     nn$dh[[l-1]] <- t(nn$W[[l-1]]) %*% nn$d[[l]]
     nn$dW[[l-1]] <- nn$d[[l]] %*% t(nn$h[[l-1]])
   }
   return(nn)
 }
+
+nn <- backward(nn,inp_test_k)
 
 nn <- backward(nn,inp_test_k)
