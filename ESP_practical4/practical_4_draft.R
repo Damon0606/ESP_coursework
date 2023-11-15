@@ -446,3 +446,91 @@ train_labels <- numeric_category[train_indices]
 # 创建并训练网络
 nn <- netup(c(4, 8, 7, 3))
 network <- train(nn, train_data, train_labels, eta = .01, mb = 10, nstep = 10000)
+
+
+
+
+## 11.15 update (expect train)
+# practical 4 draft
+data(iris)
+iris <- iris[order(iris$Species), ]
+inp <- as.matrix(iris[1, 1:4])
+# ———————————————————————————————————————————————————————————————————————————————
+# netup函数：创建表示网络的列表
+# d: a vector giving the number of nodes in each layer of a network
+netup <- function(d) {
+  network <- list()
+  network$h <- vector("list", length(d))
+  network$W <- vector("list", length(d) - 1)
+  network$b <- vector("list", length(d) - 1)
+  
+  # 初始化权重和偏置
+  for (l in 1:(length(d) - 1)) {
+    network$W[[l]] <- matrix(runif(d[l+1] * d[l], min = 0, max = 0.2), nrow = d[l+1], ncol = d[l])
+    network$b[[l]] <- runif(d[l + 1], min = 0, max = 0.2)
+    print(dim(network$W[[l]]))
+  }
+  
+
+  return(network)
+}
+
+# Test
+nn <- netup(c(4, 8, 7, 3))
+# a 4-8-7-3 network
+# for the first layer:
+# W: 4 layers-(4-1) weight parameter matrix
+# W^1: 4*8; W^2: 8*7; W^3: 7*3
+# b: 4 layers-(4-1) offset parameters
+# b^1: 1*8; b^2: 1*7; b^3: 1*3
+
+# ———————————————————————————————————————————————————————————————————————————————
+# forward函数：计算网络中每个节点的值
+# nn: a network list as returned by "netup"
+# inp: a vector of input values for the first layer
+
+forward <- function(nn, inp) {
+  nn$h[[1]] <- t(inp)
+  
+
+  for (l in 2:length(nn$h)) {
+    Zeros <- matrix(0, nrow = dim(nn$W[[l - 1]])[1], ncol = 1)
+    nn$h[[l]] <- pmax(Zeros, nn$W[[l - 1]] %*% nn$h[[l - 1]] + nn$b[[l - 1]])
+  }
+  
+  return(nn)
+}
+
+# Test
+
+nn<-forward(nn, inp)
+numeric_category <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+# ———————————————————————————————————————————————————————————————————————————————
+# backward函数：计算损失函数对节点、权重和偏置的导数
+# nn: the return from "forward"
+# k: the loss corresponding to output class k for network nn
+inp_test_k <- numeric_category[1]
+
+backward <- function(nn, k) {
+  n <- length(nn$h)
+  nn$dh <- nn$h; nn$dW <- nn$W;nn$db <- nn$b; nn$d <- nn$h
+  # Loss
+  # L = -sum(log(nn$dh[[n]])/n)
+  ## 计算d^L
+  nn$dh[[n]] <- exp(nn$h[[n]]) / sum(exp(nn$h[[n]]))
+  nn$dh[[n]][k] <- nn$dh[[n]][k]-1
+  
+  
+  ## 计算剩余层的d,dW,db,
+  for (l in n:2) {
+    nn$d[[l]] <- nn$dh[[l]]
+    Zeros <- matrix(0, nrow = length(nn$d[[l]]), ncol = 1)
+    nn$d[[l]] <- pmax(Zeros, nn$d[[l]])
+    nn$db[[l-1]] <- nn$d[[l]]
+    nn$dh[[l-1]] <- t(nn$W[[l-1]]) %*% nn$d[[l]]
+    nn$dW[[l-1]] <- nn$d[[l]] %*% t(nn$h[[l-1]])
+  }
+  return(nn)
+}
+
+nn <- backward(nn,inp_test_k)
