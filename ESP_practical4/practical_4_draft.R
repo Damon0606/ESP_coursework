@@ -541,3 +541,78 @@ backward <- function(nn, k) {
 nn <- backward(nn,inp_test_k)
 
 nn <- backward(nn,inp_test_k)
+
+
+
+
+##11.16 update
+
+data(iris)
+iris$Species <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+iris <- as.matrix(iris)
+test_sample <- iris[1,1:4]
+
+netup <- function(d) {
+  network <- list()
+  network$h <- vector("list", length(d))
+  network$W <- vector("list", length(d) - 1)
+  network$b <- vector("list", length(d) - 1)
+  
+  # 初始化权重和偏置
+  for (l in 1:(length(d) - 1)) {
+    network$W[[l]] <- matrix(runif(d[l+1] * d[l], min = 0, max = 0.2), nrow = d[l+1], ncol = d[l])
+    network$b[[l]] <- runif(d[l + 1], min = 0, max = 0.2)
+    print(dim(network$W[[l]]))
+  }
+  
+  
+  return(network)
+}
+
+forward <- function(nn, inp) {
+  nn$h[[1]] <- inp
+
+  for (l in 2:length(nn$h)) {
+    Zeros <- rep(0, dim(nn$W[[l - 1]])[1])
+    nn$h[[l]] <- pmax(Zeros, nn$W[[l - 1]] %*% nn$h[[l - 1]] + nn$b[[l - 1]])
+  }
+  
+  return(nn)
+}
+
+backward <- function(nn, k) {
+  n <- length(nn$h)
+  nn$dh <- vector("list", n)
+  nn$dW <- vector("list", n - 1)
+  nn$db <- vector("list", n - 1)
+  nn$d  <- vector("list", n)
+  # Loss
+  # L = -sum(log(nn$dh[[n]])/n)
+  ## 计算dh^L&d
+  nn$dh[[n]] <- exp(nn$h[[n]]) / sum(exp(nn$h[[n]]))
+  nn$dh[[n]][k] <- nn$dh[[n]][k]-1
+  class_num <- length(nn$h[[n]])
+  for (j in 1:class_num) {
+    if(nn$h[[n]][j] <=0){
+      nn$d[[n]][j] = 0
+    }else{
+      nn$d[[n]][j] = nn$dh[[n]][j]
+    }
+  }
+  
+  ## 计算剩余层的d,dW,db,
+  for (l in (n-1):1) {
+    nn$db[[l]] <- nn$d[[l+1]]
+    nn$dh[[l]] <- t(nn$W[[l]]) %*% nn$d[[l+1]]
+    nn$dW[[l]] <- nn$d[[l+1]] %*% t(nn$h[[l]])
+    h_length <- length(nn$h[[l]])
+    for (j in 1:h_length) {
+      if(nn$h[[l]][j] <=0){
+        nn$d[[l]][j] = 0
+      }else{
+        nn$d[[l]][j] = nn$dh[[l]][j]
+      }
+    }
+  }
+  return(nn)
+}
