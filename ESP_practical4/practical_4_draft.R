@@ -592,3 +592,135 @@ train_labels <- numeric_category[train_indices]
 
 nn <- netup(c(4, 8, 7, 3))
 network <- train(nn, train_data, train_labels, eta=.01, mb=10, nstep=10000)
+
+
+
+############# 11.16 13:00
+data(iris)
+iris$Species <- as.numeric(factor(iris$Species, levels = unique(iris$Species)))
+iris <- as.matrix(iris)
+# test_sample <- iris[1,1:4]
+
+netup <- function(d) {
+  network <- list()
+  network$h <- vector("list", length(d))
+  network$W <- vector("list", length(d) - 1)
+  network$b <- vector("list", length(d) - 1)
+  for (l in 1:(length(d) - 1)) {
+    network$W[[l]] <- matrix(runif(d[l+1] * d[l], min = 0, max = 0.2), nrow = d[l+1], ncol = d[l])
+    network$b[[l]] <- runif(d[l + 1], min = 0, max = 0.2)
+    print(dim(network$W[[l]]))
+  }
+  return(network)
+}
+
+forward <- function(nn, inp) {
+  nn$h[[1]] <- inp
+  for (l in 2:length(nn$h)) {
+    Zeros <- rep(0, dim(nn$W[[l - 1]])[1])
+    nn$h[[l]] <- pmax(Zeros, nn$W[[l - 1]] %*% nn$h[[l - 1]] + nn$b[[l - 1]])
+  }
+  return(nn)
+}
+
+backward <- function(nn, k) {
+  n <- length(nn$h)
+  nn$dh <- vector("list", n)
+  nn$dW <- vector("list", n - 1)
+  nn$db <- vector("list", n - 1)
+  nn$d  <- vector("list", n)
+  # Loss
+  # L = -sum(log(nn$dh[[n]])/n)
+  ## 计算dh^L&d
+  nn$dh[[n]] <- exp(nn$h[[n]]) / sum(exp(nn$h[[n]]))
+  nn$dh[[n]][k] <- nn$dh[[n]][k]-1
+  class_num <- length(nn$h[[n]])
+  for (j in 1:class_num) {
+    if(nn$h[[n]][j] <=0){
+      nn$d[[n]][j] = 0
+    }else{
+      nn$d[[n]][j] = nn$dh[[n]][j]
+    }
+  }
+  ## 计算剩余层的d,dW,db,
+  for (l in (n-1):1) {
+    nn$db[[l]] <- nn$d[[l+1]]
+    nn$dh[[l]] <- t(nn$W[[l]]) %*% nn$d[[l+1]]
+    nn$dW[[l]] <- nn$d[[l+1]] %*% t(nn$h[[l]])
+    h_length <- length(nn$h[[l]])
+    for (j in 1:h_length) {
+      if(nn$h[[l]][j] <=0){
+        nn$d[[l]][j] = 0
+      }else{
+        nn$d[[l]][j] = nn$dh[[l]][j]
+      }
+    }
+  }
+  return(nn)
+}
+
+meanList <- function(my_list){
+  mean_1 <- my_list[[1]][1]
+  mean_2 <- my_list[[1]][2]
+  mean_3 <- my_list[[1]][3]
+  mean_list <- list()
+  for (i in 2:length(my_list)){
+    # print(mean_1)
+    mean_1[[1]] <- mean_1[[1]] + my_list[[i]][[1]]
+    # print(mean_1)
+    mean_2[[1]] <- mean_2[[1]] + my_list[[i]][[2]]
+    mean_3[[1]] <- mean_3[[1]] + my_list[[i]][[3]]
+  }
+  mean_list <- append(mean_list, list(mean_1[[1]]/length(my_list)))
+  mean_list <- append(mean_list, list(mean_2[[1]]/length(my_list)))
+  mean_list <- append(mean_list, list(mean_3[[1]]/length(my_list)))
+  return (mean_list)
+}
+
+train <- function(nn, inp, k, eta = .01, mb = 10, nstep = 10000) {
+  for (epoch in 1:nstep){
+    batch_dW <- list()
+    batch_db <- list()
+    batch_index <- sample(1:nrow(inp), mb, replace = FALSE)
+    for (i in batch_index){
+      network <- forward(nn, inp[i, 1:4])
+      network <- backward(network, k[i])
+      batch_dW <- append(batch_dW, list(network$dW))
+      batch_db <- append(batch_db, list(network$db))
+    }
+    mean_dW <- meanList(batch_dW)
+    mean_db <- meanList(batch_db)
+    for (l in 1:length(network$W)) {
+      nn$W[[l]] <- nn$W[[l]] - eta * mean_dW[[l]]
+      nn$b[[l]] <- nn$b[[l]] - eta * mean_db[[l]]
+    }
+  }
+  return (nn)
+}
+
+
+
+test_indices <- seq(5, nrow(iris), by = 5)
+train_indices <- setdiff(1:nrow(iris), test_indices)
+inp <- iris[train_indices, 1:4] # matrix, 训练集
+k <- iris[train_indices, 5] # vector 训练集类别
+test_data <- iris[test_indices, 1:4] # matrix, 测试集
+test_k <- iris[test_indices, 5] # vector 测试集类别
+
+nn <- netup(c(4, 8, 7, 3))
+network <- train(nn, inp, k, eta=.01, mb=10, nstep=10000)
+
+
+misclassification <- function(nn, test_data, test_k){
+  test_prediction <- list()
+  for (i in 1:(nrow(test_data))){
+    prediction <- forward(nn, test_data[i, 1:4])$h[[4]]
+    prediction_label <- which.max(prediction)
+    test_prediction <- append(test_prediction, prediction_label)
+  }
+  print(unlist(test_prediction))
+  test_accuracy <- sum(unlist(test_prediction) == test_k) / nrow(test_data)
+  misclassificationRate <- 1-test_accuracy
+  cat("Misclassification Rate on test set:", misclassificationRate, "\n")
+}
+misclassification(network, test_data, test_k)
